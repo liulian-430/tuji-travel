@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Clock, Heart, Bookmark, Plus, ChevronRight, User } from 'lucide-react';
+import { Search, MapPin, Clock, Heart, ChevronRight } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
+import Logo from '../components/ui/Logo';
 import { hotCities, mockPOIs, mockTrips } from '../data/mock';
 
 const userGuides = [
@@ -43,55 +44,52 @@ const userGuides = [
 export default function Home() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedGuidePoi, setSelectedGuidePoi] = useState('');
-  const [selectedTrip, setSelectedTrip] = useState('');
 
-  const currentTrips = mockTrips.filter(t => t.status !== 'completed');
   const hotPois = mockPOIs.filter(p => p.type === 'scenic').slice(0, 6);
-
-  const handleAddToTrip = (poiName: string) => {
-    setSelectedGuidePoi(poiName);
-    setSelectedTrip(currentTrips[0]?.id || '');
-    setShowAddModal(true);
-  };
-
-  const confirmAdd = () => {
-    setShowAddModal(false);
-  };
 
   return (
     <div className="min-h-screen pb-24 md:pb-8">
-      <section className="relative px-4 pt-20 md:pt-28 md:px-8">
+      <section className="relative px-4 pt-20 md:pt-24 md:px-8">
+        {/* Background with soft gradients */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] bg-gradient-primary rounded-full opacity-15 blur-3xl" />
-          <div className="absolute -bottom-1/4 -left-1/4 w-[600px] h-[600px] bg-gradient-to-br from-pink-500 to-purple-500 rounded-full opacity-08 blur-3xl" />
+          <div className="absolute -top-1/3 -right-1/4 w-[900px] h-[900px] bg-gradient-primary rounded-full opacity-10 blur-[100px]" />
+          <div className="absolute -bottom-1/3 -left-1/4 w-[700px] h-[700px] bg-gradient-to-br from-pink-400/20 to-purple-400/20 rounded-full blur-[80px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-t from-indigo-200/30 to-pink-200/20 rounded-full blur-[60px]" />
         </div>
 
         <div className="relative max-w-6xl mx-auto">
-          {/* Search Bar */}
-          <div className="glass-card p-3 flex items-center gap-3 mb-8">
-            <Search size={20} className="text-gray-400 ml-2" />
+          {/* Header with Logo */}
+          <div className="flex items-center gap-3 mb-8">
+            <Logo />
+            <span className="text-2xl font-semibold text-gray-800 tracking-tight">途迹</span>
+          </div>
+
+          {/* Search Bar - More transparent/glass */}
+          <div className="bg-white/30 backdrop-blur-xl border border-white/40 rounded-2xl px-5 py-4 mb-8 flex items-center gap-3 shadow-xl shadow-white/20">
+            <Search size={20} className="text-gray-400/70" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜索景点、美食、酒店..."
-              className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-400"
+              className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-400/60 text-base"
             />
-            <button className="gradient-button px-4 py-2 text-sm">
+            <button 
+              onClick={() => navigate('/map')}
+              className="px-4 py-2 bg-gradient-primary rounded-xl text-white text-sm font-medium shadow-lg shadow-primary-mid/30"
+            >
               搜索
             </button>
           </div>
 
           {/* Hot Cities */}
           <div className="mb-10">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">热门目的地</h2>
+            <h2 className="text-lg font-semibold text-gray-800/80 mb-5">热门目的地</h2>
             <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
               {hotCities.map((city) => (
                 <GlassCard
                   key={city.id}
-                  className="flex-shrink-0 w-36 overflow-hidden p-0 cursor-pointer hover:scale-105 transition-transform"
+                  className="flex-shrink-0 w-36 overflow-hidden p-0 cursor-pointer"
                   onClick={() => navigate(`/map?city=${city.name}`)}
                 >
                   <div className="relative h-40">
@@ -100,7 +98,7 @@ export default function Home() {
                       alt={city.name}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     <div className="absolute bottom-3 left-3 right-3">
                       <span className="text-white font-medium text-lg">{city.name}</span>
                     </div>
@@ -112,12 +110,12 @@ export default function Home() {
 
           {/* Hot POIs */}
           <div className="mb-10">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">热门景点</h2>
+            <h2 className="text-lg font-semibold text-gray-800/80 mb-5">热门景点</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {hotPois.map((poi) => (
                 <GlassCard
                   key={poi.id}
-                  className="overflow-hidden cursor-pointer"
+                  className="overflow-hidden cursor-pointer p-0"
                   onClick={() => navigate(`/poi/${poi.id}`)}
                 >
                   <div className="relative h-32">
@@ -126,18 +124,18 @@ export default function Home() {
                       alt={poi.name}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                     <div className="absolute bottom-2 left-2 right-2">
                       <span className="text-white text-sm font-medium truncate block">{poi.name}</span>
                     </div>
                   </div>
                   <div className="p-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">{poi.city}</span>
-                      <span className="text-xs text-yellow-500">★ {poi.rating}</span>
+                      <span className="text-xs text-gray-500/80">{poi.city}</span>
+                      <span className="text-xs text-yellow-500/80">★ {poi.rating}</span>
                     </div>
                     {poi.price > 0 && (
-                      <span className="text-sm text-primary-mid font-medium mt-1 block">
+                      <span className="text-sm text-primary-mid/80 font-medium mt-1 block">
                         ¥{poi.price}
                       </span>
                     )}
@@ -149,9 +147,9 @@ export default function Home() {
 
           {/* Recommended Guides */}
           <div className="mb-10">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800">推荐攻略</h2>
-              <button className="flex items-center gap-1 text-primary-mid text-sm hover:underline">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-semibold text-gray-800/80">推荐攻略</h2>
+              <button className="flex items-center gap-1 text-primary-mid/80 text-sm font-medium">
                 <span>更多</span>
                 <ChevronRight size={16} />
               </button>
@@ -164,40 +162,40 @@ export default function Home() {
                   onClick={() => navigate(`/guide/${guide.id}`)}
                 >
                   <div className="flex gap-4">
-                    <div className="relative w-40 h-40 flex-shrink-0">
+                    <div className="relative w-36 h-36 flex-shrink-0">
                       <img
                         src={guide.image}
                         alt={guide.title}
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute bottom-2 right-2">
-                        <span className="px-2 py-1 rounded-full bg-black/50 text-white text-xs flex items-center gap-1">
+                        <span className="px-2 py-1 rounded-full bg-black/40 backdrop-blur-sm text-white text-xs flex items-center gap-1">
                           <Clock size={10} />
                           {guide.days}天
                         </span>
                       </div>
                     </div>
-                    <div className="flex-1 min-w-0 py-3">
-                      <h3 className="font-bold text-gray-800 text-lg truncate">{guide.title}</h3>
+                    <div className="flex-1 min-w-0 py-3 pr-3">
+                      <h3 className="font-semibold text-gray-800 text-base truncate">{guide.title}</h3>
                       <div className="flex items-center gap-2 mt-2">
-                        <div className="w-7 h-7 rounded-full bg-gradient-primary flex items-center justify-center">
+                        <div className="w-6 h-6 rounded-full bg-gradient-primary flex items-center justify-center">
                           <span className="text-white text-xs">{guide.avatar}</span>
                         </div>
-                        <span className="text-sm text-gray-500">{guide.author}</span>
+                        <span className="text-sm text-gray-500/70">{guide.author}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         {guide.pois.map((poi, idx) => (
                           <div key={idx} className="flex items-center">
-                            <span className="px-2 py-1 rounded-full bg-primary-mid/10 text-primary-mid text-xs">
+                            <span className="px-2 py-0.5 rounded-full bg-primary-mid/10 text-primary-mid/80 text-xs">
                               {poi}
                             </span>
                             {idx < guide.pois.length - 1 && (
-                              <span className="text-gray-300 mx-1">·</span>
+                              <span className="text-gray-300/60 mx-1">·</span>
                             )}
                           </div>
                         ))}
                       </div>
-                      <div className="flex items-center gap-4 mt-3 text-sm text-gray-400">
+                      <div className="flex items-center gap-4 mt-3 text-sm text-gray-400/60">
                         <span className="flex items-center gap-1">
                           <Heart size={14} />
                           {guide.likes}
@@ -212,69 +210,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Add to Trip Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 w-[90%] max-w-sm animate-bounce-in">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">添加到行程</h3>
-            <p className="text-gray-600 mb-4">
-              将「{selectedGuidePoi}」添加到：
-            </p>
-            <div className="space-y-2">
-              {currentTrips.length > 0 ? (
-                currentTrips.map((trip) => (
-                  <button
-                    key={trip.id}
-                    onClick={() => setSelectedTrip(trip.id)}
-                    className={`w-full p-3 rounded-xl text-left transition-all ${
-                      selectedTrip === trip.id
-                        ? 'bg-primary-mid/10 ring-2 ring-primary-mid'
-                        : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-800">{trip.name}</p>
-                        <p className="text-xs text-gray-500">{trip.destination} · {trip.days}天</p>
-                      </div>
-                      {selectedTrip === trip.id && (
-                        <div className="w-5 h-5 rounded-full bg-primary-mid flex items-center justify-center">
-                          <Plus size={14} className="text-white" />
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                ))
-              ) : (
-                <p className="text-gray-400 text-sm text-center py-4">暂无进行中的行程</p>
-              )}
-              <button
-                onClick={() => navigate('/new-trip')}
-                className="w-full p-3 rounded-xl border-2 border-dashed border-gray-200 text-gray-500 hover:border-primary-mid hover:text-primary-mid transition-all flex items-center justify-center gap-2"
-              >
-                <Plus size={16} />
-                <span>创建新行程</span>
-              </button>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-              >
-                取消
-              </button>
-              <button
-                onClick={confirmAdd}
-                disabled={!selectedTrip}
-                className="flex-1 py-3 rounded-xl bg-gradient-primary text-white disabled:opacity-50 transition-colors"
-              >
-                添加
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

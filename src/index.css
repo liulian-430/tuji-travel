@@ -17,23 +17,25 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, rgba(99, 102, 241, 0.08) 50%, rgba(236, 72, 153, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(238, 242, 255, 0.8) 50%, rgba(253, 242, 248, 0.8) 100%);
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-glass;
-    transition: all 0.3s ease;
+    @apply bg-white/20 backdrop-blur-2xl border border-white/30 rounded-2xl;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .glass-card:hover {
-    @apply shadow-glass-hover;
+    @apply bg-white/30;
+    box-shadow: 0 12px 40px rgba(31, 38, 135, 0.12);
     transform: translateY(-2px);
   }
 
   .glass-input {
-    @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-4 py-3;
-    @apply focus:outline-none focus:ring-2 focus:ring-primary-mid/50 focus:border-primary-mid/50;
+    @apply bg-white/20 backdrop-blur-xl border border-white/30 rounded-xl px-4 py-3;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-mid/30 focus:border-primary-mid/30;
     @apply transition-all duration-300;
   }
 
@@ -60,12 +62,11 @@ body {
   }
 
   .glass-nav {
-    @apply glass-card fixed bottom-4 left-1/2 -translate-x-1/2 px-6 py-2;
-    @apply flex items-center gap-8 z-50;
+    @apply fixed bottom-0 left-0 right-0 px-4 pb-4 z-50;
   }
 
   .nav-item {
-    @apply flex flex-col items-center gap-1 text-gray-600 hover:text-primary-mid;
+    @apply flex flex-col items-center gap-1 text-gray-500/70 hover:text-primary-mid;
     @apply transition-colors duration-300 cursor-pointer;
   }
 
@@ -75,7 +76,7 @@ body {
 
   .tag {
     @apply px-3 py-1 rounded-full text-sm font-medium;
-    @apply bg-white/20 backdrop-blur-sm border border-white/20;
+    @apply bg-white/20 backdrop-blur-md border border-white/30;
     @apply transition-all duration-300 hover:bg-white/30;
   }
 
@@ -137,7 +138,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #6366f1, #ec4899);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(236, 72, 153, 0.5));
   border-radius: 3px;
 }
 
@@ -147,7 +148,7 @@ body {
 }
 
 .leaflet-popup-content-wrapper {
-  @apply rounded-xl shadow-glass;
+  @apply rounded-xl;
   backdrop-filter: blur(20px);
 }
 

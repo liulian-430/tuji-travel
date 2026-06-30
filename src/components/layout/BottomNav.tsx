@@ -12,19 +12,35 @@ export default function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isRecording, setIsRecording] = useState(false);
-  const [showRecordingModal, setShowRecordingModal] = useState(false);
+  const [showTripModal, setShowTripModal] = useState(false);
+  const [tripName, setTripName] = useState('');
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressStartY = useRef<number>(0);
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };
 
-  const handleTouchStart = useCallback(() => {
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLButtonElement>) => {
+    pressStartY.current = e.touches[0].clientY;
     longPressTimer.current = setTimeout(() => {
       setIsRecording(true);
-      setShowRecordingModal(true);
     }, 500);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLButtonElement>) => {
+    if (e.touches.length > 0) {
+      const currentY = e.touches[0].clientY;
+      // If swiped up more than 50px, cancel recording
+      if (pressStartY.current - currentY > 50) {
+        if (longPressTimer.current) {
+          clearTimeout(longPressTimer.current);
+          longPressTimer.current = null;
+        }
+        setIsRecording(false);
+      }
+    }
   }, []);
 
   const handleTouchEnd = useCallback(() => {
@@ -34,23 +50,32 @@ export default function BottomNav() {
     }
     if (isRecording) {
       setIsRecording(false);
-      setShowRecordingModal(false);
       navigate('/ai-planner?voice=true');
     }
   }, [isRecording, navigate]);
 
   const handleClick = useCallback(() => {
     if (!isRecording) {
-      navigate('/new-trip');
+      setShowTripModal(true);
     }
-  }, [isRecording, navigate]);
+  }, [isRecording]);
+
+  const handleCreateTrip = () => {
+    if (tripName.trim()) {
+      setShowTripModal(false);
+      setTripName('');
+      navigate('/ai-planner');
+    }
+  };
 
   return (
     <>
       <nav className="fixed bottom-0 left-0 right-0 md:hidden z-40">
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white/90 via-white/50 to-transparent pointer-events-none" />
+        {/* Background gradient */}
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white/95 via-white/60 to-transparent pointer-events-none" />
         
-        <div className="mx-4 mb-4 bg-white/80 backdrop-blur-2xl rounded-3xl shadow-xl border border-white/50 px-6 py-3">
+        {/* Nav bar */}
+        <div className="relative mx-4 mb-4 bg-white/40 backdrop-blur-3xl rounded-3xl shadow-2xl border border-white/30 px-6 py-4">
           <div className="flex items-center justify-between">
             {navItems.slice(0, 2).map(({ path, label }) => (
               <button
@@ -58,37 +83,122 @@ export default function BottomNav() {
                 onClick={() => navigate(path)}
                 className={`text-center min-w-[3rem] transition-all duration-300 ${
                   isActive(path)
-                    ? 'text-primary-mid font-medium'
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'text-primary-mid font-semibold'
+                    : 'text-gray-400/70 hover:text-gray-600'
                 }`}
               >
-                <span className="text-sm">{label}</span>
+                <span className="text-sm tracking-wide">{label}</span>
               </button>
             ))}
 
+            {/* + Button */}
             <div className="relative">
               <button
                 onClick={handleClick}
                 onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
-                onMouseDown={handleTouchStart}
-                onMouseUp={handleTouchEnd}
-                onMouseLeave={() => {
-                  if (longPressTimer.current) {
-                    clearTimeout(longPressTimer.current);
-                    longPressTimer.current = null;
-                  }
-                }}
-                className="w-14 h-14 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary-mid/30 hover:shadow-xl hover:shadow-primary-mid/40 active:scale-95 transition-all duration-300 -mt-8"
+                className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-2xl transition-all duration-300"
                 style={{
-                  boxShadow: isRecording 
-                    ? '0 0 0 10px rgba(139, 92, 246, 0.3), 0 0 0 20px rgba(139, 92, 246, 0.2), 0 0 0 30px rgba(139, 92, 246, 0.1)'
-                    : '0 8px 25px rgba(139, 92, 246, 0.4)',
-                  transform: isRecording ? 'scale(1.1)' : 'scale(1)',
+                  background: isRecording
+                    ? 'linear-gradient(135deg, #ec4899, #f43f5e)'
+                    : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                  boxShadow: isRecording
+                    ? '0 0 0 0px rgba(236, 72, 153, 0), 0 0 0 0px rgba(236, 72, 153, 0)'
+                    : '0 8px 32px rgba(139, 92, 246, 0.4)',
+                  transform: isRecording ? 'scale(1.15)' : 'scale(1)',
                 }}
               >
-                <span className={`transition-transform duration-300 ${isRecording ? 'rotate-90' : ''}`}>＋</span>
+                <span className={`transition-transform duration-300 ${isRecording ? 'opacity-0 scale-0' : 'opacity-100 scale-100'}`}>
+                  ＋
+                </span>
+                {isRecording && (
+                  <span className="absolute text-white text-lg">🎙</span>
+                )}
               </button>
+
+              {/* Recording wave animation */}
+              {isRecording && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 pointer-events-none">
+                  {/* Wave circles */}
+                  <div className="relative w-20 h-20">
+                    <div 
+                      className="absolute inset-0 rounded-full border-2 border-primary-mid/30"
+                      style={{
+                        animation: 'waveExpand 1.5s ease-out infinite',
+                      }}
+                    />
+                    <div 
+                      className="absolute inset-2 rounded-full border-2 border-primary-mid/40"
+                      style={{
+                        animation: 'waveExpand 1.5s ease-out infinite 0.3s',
+                      }}
+                    />
+                    <div 
+                      className="absolute inset-4 rounded-full border-2 border-primary-mid/50"
+                      style={{
+                        animation: 'waveExpand 1.5s ease-out infinite 0.6s',
+                      }}
+                    />
+                    <div 
+                      className="absolute inset-0 rounded-full bg-gradient-primary/10"
+                      style={{
+                        animation: 'waveExpand 1.5s ease-out infinite 0.9s',
+                      }}
+                    />
+                  </div>
+                  {/* Upward waves SVG */}
+                  <svg 
+                    className="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 opacity-60"
+                    viewBox="0 0 64 64"
+                  >
+                    <defs>
+                      <linearGradient id="waveGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stopColor="#6366f1" />
+                        <stop offset="100%" stopColor="#ec4899" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M8 32 Q16 20 24 32 Q32 44 40 32 Q48 20 56 32"
+                      fill="none"
+                      stroke="url(#waveGrad)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      style={{
+                        animation: 'waveMove 0.8s ease-in-out infinite',
+                      }}
+                    />
+                    <path
+                      d="M8 40 Q16 28 24 40 Q32 52 40 40 Q48 28 56 40"
+                      fill="none"
+                      stroke="url(#waveGrad)"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      opacity="0.6"
+                      style={{
+                        animation: 'waveMove 0.8s ease-in-out infinite 0.2s',
+                      }}
+                    />
+                    <path
+                      d="M8 48 Q16 36 24 48 Q32 60 40 48 Q48 36 56 48"
+                      fill="none"
+                      stroke="url(#waveGrad)"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      opacity="0.3"
+                      style={{
+                        animation: 'waveMove 0.8s ease-in-out infinite 0.4s',
+                      }}
+                    />
+                  </svg>
+                  {/* Recording text */}
+                  <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                    <span className="text-xs text-gray-500/80 bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">
+                      松手进入AI规划 · 上划取消
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {navItems.slice(2).map(({ path, label }) => (
@@ -97,33 +207,87 @@ export default function BottomNav() {
                 onClick={() => navigate(path)}
                 className={`text-center min-w-[3rem] transition-all duration-300 ${
                   isActive(path)
-                    ? 'text-primary-mid font-medium'
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'text-primary-mid font-semibold'
+                    : 'text-gray-400/70 hover:text-gray-600'
                 }`}
               >
-                <span className="text-sm">{label}</span>
+                <span className="text-sm tracking-wide">{label}</span>
               </button>
             ))}
           </div>
         </div>
       </nav>
 
-      {showRecordingModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-8 text-center animate-bounce-in">
-            <div className="relative w-24 h-24 mx-auto mb-6">
-              <div className="absolute inset-0 bg-gradient-primary rounded-full opacity-20 animate-ping" />
-              <div className="absolute inset-2 bg-gradient-primary rounded-full opacity-40 animate-ping" style={{ animationDelay: '0.2s' }} />
-              <div className="absolute inset-4 bg-gradient-primary rounded-full opacity-60 animate-ping" style={{ animationDelay: '0.4s' }} />
-              <div className="absolute inset-0 bg-gradient-primary rounded-full flex items-center justify-center">
-                <span className="text-white text-3xl font-bold">＋</span>
-              </div>
+      {/* New Trip Modal */}
+      {showTripModal && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/20 backdrop-blur-sm"
+          onClick={() => setShowTripModal(false)}
+        >
+          <div 
+            className="w-full max-w-md bg-white/70 backdrop-blur-3xl rounded-t-3xl p-6 pb-10 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              animation: 'slideUp 0.3s ease-out',
+            }}
+          >
+            <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-800 text-center">新建行程</h3>
+            <input
+              type="text"
+              value={tripName}
+              onChange={(e) => setTripName(e.target.value)}
+              placeholder="输入行程名称"
+              className="w-full bg-white/50 backdrop-blur-sm border border-white/40 rounded-2xl px-5 py-4 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-mid/30 text-center text-lg"
+              autoFocus
+            />
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setShowTripModal(false)}
+                className="flex-1 py-4 rounded-2xl bg-gray-100/80 backdrop-blur-sm text-gray-600 font-medium hover:bg-gray-200/80 transition-colors"
+              >
+                返回
+              </button>
+              <button
+                onClick={handleCreateTrip}
+                disabled={!tripName.trim()}
+                className="flex-1 py-4 rounded-2xl bg-gradient-primary text-white font-medium shadow-lg shadow-primary-mid/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:shadow-xl hover:shadow-primary-mid/40"
+              >
+                创建
+              </button>
             </div>
-            <p className="text-gray-700 font-medium mb-2">正在录音...</p>
-            <p className="text-gray-400 text-sm">松开手指完成录音</p>
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes waveExpand {
+          0% {
+            transform: scale(0.5);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(2);
+            opacity: 0;
+          }
+        }
+        @keyframes waveMove {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-8px);
+          }
+        }
+        @keyframes slideUp {
+          from {
+            transform: translateY(100%);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </>
   );
 }
