@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 白色圆角背景 -->
+  <rect x="16" y="16" width="480" height="480" rx="128" fill="white" stroke="#1a1a2e" stroke-width="24"/>
+  
+  <!-- 左下圆点（空心） -->
+  <circle cx="154" cy="358" r="64" fill="white" stroke="#1a1a2e" stroke-width="24"/>
+  
+  <!-- 右上圆点（空心） -->
+  <circle cx="358" cy="154" r="64" fill="white" stroke="#1a1a2e" stroke-width="24"/>
+  
+  <!-- 连接曲线 -->
+  <path d="M154 358 C154 358 256 256 358 154" 
+        stroke="#1a1a2e" 
+        stroke-width="36" 
+        stroke-linecap="round" 
+        fill="none"/>
+</svg>
