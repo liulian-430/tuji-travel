@@ -104,96 +104,104 @@ export default function BottomNav() {
                     ? 'linear-gradient(135deg, #ec4899, #f43f5e)'
                     : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                   boxShadow: isRecording
-                    ? '0 0 0 0px rgba(236, 72, 153, 0), 0 0 0 0px rgba(236, 72, 153, 0)'
+                    ? '0 0 20px rgba(236, 72, 153, 0.6), 0 0 40px rgba(236, 72, 153, 0.4)'
                     : '0 8px 32px rgba(139, 92, 246, 0.4)',
                   transform: isRecording ? 'scale(1.15)' : 'scale(1)',
+                  animation: isRecording ? 'pulseGlow 1s ease-in-out infinite' : 'none',
                 }}
               >
                 <span className={`transition-transform duration-300 ${isRecording ? 'opacity-0 scale-0' : 'opacity-100 scale-100'}`}>
                   ＋
                 </span>
                 {isRecording && (
-                  <span className="absolute text-white text-lg">🎙</span>
+                  <span className="absolute text-white text-lg animate-pulse">🎙</span>
                 )}
               </button>
 
               {/* Recording wave animation */}
               {isRecording && (
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 pointer-events-none">
-                  {/* Wave circles */}
-                  <div className="relative w-20 h-20">
+                  {/* Large expanding rings */}
+                  <div className="relative w-32 h-32 -translate-x-1/2">
                     <div 
-                      className="absolute inset-0 rounded-full border-2 border-primary-mid/30"
+                      className="absolute inset-0 rounded-full border-4 border-pink-400/50"
                       style={{
-                        animation: 'waveExpand 1.5s ease-out infinite',
+                        animation: 'waveExpand 2s ease-out infinite',
                       }}
                     />
                     <div 
-                      className="absolute inset-2 rounded-full border-2 border-primary-mid/40"
+                      className="absolute inset-4 rounded-full border-4 border-purple-400/60"
                       style={{
-                        animation: 'waveExpand 1.5s ease-out infinite 0.3s',
+                        animation: 'waveExpand 2s ease-out infinite 0.5s',
                       }}
                     />
                     <div 
-                      className="absolute inset-4 rounded-full border-2 border-primary-mid/50"
+                      className="absolute inset-8 rounded-full border-4 border-indigo-400/70"
                       style={{
-                        animation: 'waveExpand 1.5s ease-out infinite 0.6s',
+                        animation: 'waveExpand 2s ease-out infinite 1s',
                       }}
                     />
                     <div 
-                      className="absolute inset-0 rounded-full bg-gradient-primary/10"
+                      className="absolute inset-12 rounded-full bg-gradient-to-r from-pink-500/30 to-purple-500/30"
                       style={{
-                        animation: 'waveExpand 1.5s ease-out infinite 0.9s',
+                        animation: 'waveExpand 2s ease-out infinite 1.5s',
                       }}
                     />
                   </div>
-                  {/* Upward waves SVG */}
-                  <svg 
-                    className="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 opacity-60"
-                    viewBox="0 0 64 64"
-                  >
-                    <defs>
-                      <linearGradient id="waveGrad" x1="0%" y1="100%" x2="0%" y2="0%">
-                        <stop offset="0%" stopColor="#6366f1" />
-                        <stop offset="100%" stopColor="#ec4899" stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    <path
-                      d="M8 32 Q16 20 24 32 Q32 44 40 32 Q48 20 56 32"
-                      fill="none"
-                      stroke="url(#waveGrad)"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      style={{
-                        animation: 'waveMove 0.8s ease-in-out infinite',
-                      }}
-                    />
-                    <path
-                      d="M8 40 Q16 28 24 40 Q32 52 40 40 Q48 28 56 40"
-                      fill="none"
-                      stroke="url(#waveGrad)"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      opacity="0.6"
-                      style={{
-                        animation: 'waveMove 0.8s ease-in-out infinite 0.2s',
-                      }}
-                    />
-                    <path
-                      d="M8 48 Q16 36 24 48 Q32 60 40 48 Q48 36 56 48"
-                      fill="none"
-                      stroke="url(#waveGrad)"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      opacity="0.3"
-                      style={{
-                        animation: 'waveMove 0.8s ease-in-out infinite 0.4s',
-                      }}
-                    />
-                  </svg>
+                  
+                  {/* Animated upward waves */}
+                  <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-24 h-24 overflow-hidden">
+                    <svg 
+                      className="w-full h-full"
+                      viewBox="0 0 64 64"
+                    >
+                      <defs>
+                        <linearGradient id="waveGradBottom" x1="0%" y1="100%" x2="0%" y2="0%">
+                          <stop offset="0%" stopColor="#ec4899" />
+                          <stop offset="50%" stopColor="#8b5cf6" />
+                          <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      {/* Multiple wave layers */}
+                      <path
+                        d="M-8 48 Q8 32 24 48 Q40 64 56 48 Q72 32 88 48"
+                        fill="none"
+                        stroke="url(#waveGradBottom)"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        opacity="0.8"
+                        style={{
+                          animation: 'waveRise 1.5s ease-in-out infinite',
+                        }}
+                      />
+                      <path
+                        d="M-8 56 Q8 40 24 56 Q40 72 56 56 Q72 40 88 56"
+                        fill="none"
+                        stroke="url(#waveGradBottom)"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        opacity="0.5"
+                        style={{
+                          animation: 'waveRise 1.5s ease-in-out infinite 0.3s',
+                        }}
+                      />
+                      <path
+                        d="M-8 64 Q8 48 24 64 Q40 80 56 64 Q72 48 88 64"
+                        fill="none"
+                        stroke="url(#waveGradBottom)"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        opacity="0.3"
+                        style={{
+                          animation: 'waveRise 1.5s ease-in-out infinite 0.6s',
+                        }}
+                      />
+                    </svg>
+                  </div>
+                  
                   {/* Recording text */}
                   <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                    <span className="text-xs text-gray-500/80 bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">
+                    <span className="text-xs text-gray-600/90 bg-white/80 backdrop-blur-xl px-4 py-2 rounded-full shadow-lg font-medium">
                       松手进入AI规划 · 上划取消
                     </span>
                   </div>
@@ -263,20 +271,30 @@ export default function BottomNav() {
       <style>{`
         @keyframes waveExpand {
           0% {
-            transform: scale(0.5);
+            transform: scale(0.2);
             opacity: 1;
           }
           100% {
-            transform: scale(2);
+            transform: scale(2.5);
             opacity: 0;
           }
         }
-        @keyframes waveMove {
-          0%, 100% {
+        @keyframes waveRise {
+          0% {
             transform: translateY(0);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-20px);
+            opacity: 0;
+          }
+        }
+        @keyframes pulseGlow {
+          0%, 100% {
+            box-shadow: 0 0 0 0px rgba(236, 72, 153, 0.4), 0 0 20px rgba(236, 72, 153, 0.3);
           }
           50% {
-            transform: translateY(-8px);
+            box-shadow: 0 0 0 8px rgba(236, 72, 153, 0), 0 0 40px rgba(236, 72, 153, 0.5);
           }
         }
         @keyframes slideUp {
