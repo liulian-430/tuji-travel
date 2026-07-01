@@ -4,17 +4,17 @@
   <rect x="4" y="4" width="504" height="504" rx="148" fill="#14141f"/>
   
   <!-- 左下圆点 -->
-  <circle cx="120" cy="400" r="44" fill="white"/>
+  <circle cx="120" cy="400" r="48" fill="white"/>
   
   <!-- 右上圆点 -->
-  <circle cx="400" cy="110" r="48" fill="white"/>
+  <circle cx="400" cy="120" r="48" fill="white"/>
   
   <!-- 曲线：从左下圆点出发，先平缓向右上弯，中段向右延伸，再向上弯到右上圆点 -->
   <path d="M120 400 
            C140 320 200 270 280 260 
            C360 250 400 200 400 110" 
         stroke="white" 
-        stroke-width="50" 
+        stroke-width="36" 
         stroke-linecap="round" 
         fill="none"/>
 </svg>
