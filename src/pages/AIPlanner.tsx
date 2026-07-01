@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Sparkles, Mic, ChevronUp, ChevronDown, Trash2, Plus, MapPin, Calendar, Users, DollarSign, Utensils, Building, X } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
+import AILoadingState from '../components/ui/Skeleton';
 import { mockPOIs, DaySchedule, TripPOI } from '../data/mock';
 import { useTripStore } from '@/store/useTripStore';
 
@@ -32,6 +33,7 @@ export default function AIPlanner() {
   const [startDate, setStartDate] = useState('');
 
   const [isGenerated, setIsGenerated] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [schedules, setSchedules] = useState<DaySchedule[]>([]);
 
   const allPois = mockPOIs.filter(p => p.type === 'scenic');
@@ -48,65 +50,73 @@ export default function AIPlanner() {
 
   const handleAIGenerate = () => {
     if (!aiInput.trim()) return;
-
-    const mockSchedule: DaySchedule[] = [
-      {
-        id: '1',
-        tripId: 'new',
-        dayIndex: 1,
-        date: startDate || '2026-07-15',
-        items: mockPOIs.slice(0, 2).map((poi, idx) => ({
-          id: `1-${idx}`,
-          poiId: poi.id,
-          poi,
-          startTime: `${9 + idx * 3}:00`,
-          endTime: `${11 + idx * 3}:00`,
-          type: poi.type as 'scenic' | 'food' | 'hotel' | 'transport',
-        })),
-      },
-      {
-        id: '2',
-        tripId: 'new',
-        dayIndex: 2,
-        date: startDate || '2026-07-16',
-        items: mockPOIs.slice(2, 4).map((poi, idx) => ({
-          id: `2-${idx}`,
-          poiId: poi.id,
-          poi,
-          startTime: `${9 + idx * 3}:00`,
-          endTime: `${11 + idx * 3}:00`,
-          type: poi.type as 'scenic' | 'food' | 'hotel' | 'transport',
-        })),
-      },
-    ];
-    setSchedules(mockSchedule);
-    setIsGenerated(true);
+    setIsGenerating(true);
+    // 模拟 AI 生成耗时
+    setTimeout(() => {
+      const mockSchedule: DaySchedule[] = [
+        {
+          id: '1',
+          tripId: 'new',
+          dayIndex: 1,
+          date: startDate || '2026-07-15',
+          items: mockPOIs.slice(0, 2).map((poi, idx) => ({
+            id: `1-${idx}`,
+            poiId: poi.id,
+            poi,
+            startTime: `${9 + idx * 3}:00`,
+            endTime: `${11 + idx * 3}:00`,
+            type: poi.type as 'scenic' | 'food' | 'hotel' | 'transport',
+          })),
+        },
+        {
+          id: '2',
+          tripId: 'new',
+          dayIndex: 2,
+          date: startDate || '2026-07-16',
+          items: mockPOIs.slice(2, 4).map((poi, idx) => ({
+            id: `2-${idx}`,
+            poiId: poi.id,
+            poi,
+            startTime: `${9 + idx * 3}:00`,
+            endTime: `${11 + idx * 3}:00`,
+            type: poi.type as 'scenic' | 'food' | 'hotel' | 'transport',
+          })),
+        },
+      ];
+      setSchedules(mockSchedule);
+      setIsGenerated(true);
+      setIsGenerating(false);
+    }, 1800);
   };
 
   const handleCustomGenerate = () => {
-    const selectedItems = [
-      ...mockPOIs.filter(p => p.type === 'scenic'),
-      ...mockPOIs.filter(p => p.type === 'food'),
-      ...mockPOIs.filter(p => p.type === 'hotel'),
-    ].slice(0, 6);
+    setIsGenerating(true);
+    setTimeout(() => {
+      const selectedItems = [
+        ...mockPOIs.filter(p => p.type === 'scenic'),
+        ...mockPOIs.filter(p => p.type === 'food'),
+        ...mockPOIs.filter(p => p.type === 'hotel'),
+      ].slice(0, 6);
 
-    const mockSchedule: DaySchedule[] = Array.from({ length: days }, (_, dayIdx) => ({
-      id: `${dayIdx + 1}`,
-      tripId: 'new',
-      dayIndex: dayIdx + 1,
-      date: startDate || `2026-07-${15 + dayIdx}`,
-      items: selectedItems.slice(dayIdx * 2, (dayIdx + 1) * 2).map((poi, idx) => ({
-        id: `${dayIdx + 1}-${idx}`,
-        poiId: poi.id,
-        poi,
-        startTime: `${9 + idx * 3}:00`,
-        endTime: `${11 + idx * 3}:00`,
-        type: poi.type as 'scenic' | 'food' | 'hotel' | 'transport',
-      })),
-    }));
+      const mockSchedule: DaySchedule[] = Array.from({ length: days }, (_, dayIdx) => ({
+        id: `${dayIdx + 1}`,
+        tripId: 'new',
+        dayIndex: dayIdx + 1,
+        date: startDate || `2026-07-${15 + dayIdx}`,
+        items: selectedItems.slice(dayIdx * 2, (dayIdx + 1) * 2).map((poi, idx) => ({
+          id: `${dayIdx + 1}-${idx}`,
+          poiId: poi.id,
+          poi,
+          startTime: `${9 + idx * 3}:00`,
+          endTime: `${11 + idx * 3}:00`,
+          type: poi.type as 'scenic' | 'food' | 'hotel' | 'transport',
+        })),
+      }));
 
-    setSchedules(mockSchedule);
-    setIsGenerated(true);
+      setSchedules(mockSchedule);
+      setIsGenerated(true);
+      setIsGenerating(false);
+    }, 1800);
   };
 
   const moveItem = (dayIndex: number, itemIndex: number, direction: 'up' | 'down') => {
@@ -165,7 +175,10 @@ export default function AIPlanner() {
           </button>
         </div>
 
-        {!isGenerated ? (
+        {isGenerating ? (
+          /* AI 生成中加载状态 */
+          <AILoadingState days={activeTab === 'ai' ? 2 : days} />
+        ) : !isGenerated ? (
           activeTab === 'ai' ? (
             /* AI 规划 - 文字/语音输入 */
             <GlassCard className="p-6">
@@ -374,17 +387,42 @@ export default function AIPlanner() {
                   </button>
                   <button
                     onClick={() => {
+                      // 将 DaySchedule (mock, 含 items) 转换为 DayScheduleSimple (store, 含 morning/afternoon/evening)
                       const allPOIs: TripPOI[] = [];
-                      schedules.forEach((day) => {
-                        day.morning?.forEach((p) => allPOIs.push(p));
-                        day.afternoon?.forEach((p) => allPOIs.push(p));
-                        day.evening?.forEach((p) => allPOIs.push(p));
+                      const simpleSchedules = schedules.map((day) => {
+                        const morning: TripPOI[] = [];
+                        const afternoon: TripPOI[] = [];
+                        const evening: TripPOI[] = [];
+                        day.items.forEach((item) => {
+                          const poi = item.poi;
+                          const tripPoi: TripPOI = {
+                            id: poi.id,
+                            name: poi.name,
+                            type: poi.type,
+                            duration: '2小时',
+                            price: poi.price,
+                            image: poi.images[0] || '',
+                            latitude: poi.latitude,
+                            longitude: poi.longitude,
+                          };
+                          allPOIs.push(tripPoi);
+                          const hour = parseInt(item.startTime.split(':')[0], 10);
+                          if (hour < 12) morning.push(tripPoi);
+                          else if (hour < 18) afternoon.push(tripPoi);
+                          else evening.push(tripPoi);
+                        });
+                        return {
+                          day: day.dayIndex,
+                          morning: morning.length ? morning : undefined,
+                          afternoon: afternoon.length ? afternoon : undefined,
+                          evening: evening.length ? evening : undefined,
+                        };
                       });
                       setPendingTrip({
                         name: `${destination || '北京'}${days}日游`,
                         destination: destination || '北京',
                         days,
-                        schedules,
+                        schedules: simpleSchedules,
                         pois: allPOIs,
                       });
                       navigate('/trip/new');

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { MapPin, Calendar, ChevronRight, Camera, Heart, Star } from 'lucide-react';
+import { MapPin, Calendar, ChevronRight, Camera, Heart, Star, MapPinned, History as HistoryIcon } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
+import EmptyState from '../components/ui/EmptyState';
 import TripCard from '../components/trip/TripCard';
 import { useTripStore } from '@/store/useTripStore';
 import { useNavigate } from 'react-router-dom';
@@ -82,14 +83,14 @@ export default function Profile() {
                 />
               ))
             ) : (
-              <GlassCard className="p-8 text-center">
-                <p className="text-gray-500 mb-4">暂无进行中的行程</p>
-                <button
-                  onClick={() => navigate('/ai-planner')}
-                  className="gradient-button px-6 py-2"
-                >
-                  创建新行程
-                </button>
+              <GlassCard className="p-4">
+                <EmptyState
+                  icon={MapPinned}
+                  title="暂无进行中的行程"
+                  description="开启一段新的旅程吧，让每一段路都成为回忆。"
+                  actionText="创建新行程"
+                  onAction={() => navigate('/ai-planner')}
+                />
               </GlassCard>
             )}
           </div>
@@ -104,8 +105,12 @@ export default function Profile() {
                 />
               ))
             ) : (
-              <GlassCard className="p-8 text-center">
-                <p className="text-gray-500">暂无历史行程</p>
+              <GlassCard className="p-4">
+                <EmptyState
+                  icon={HistoryIcon}
+                  title="暂无历史行程"
+                  description="完成的行程将归档至此，留下你的旅行足迹。"
+                />
               </GlassCard>
             )}
           </div>

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus, AlertTriangle, X } from 'lucide-react';
+import { ChevronLeft, Plus, AlertTriangle, X, Receipt } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
+import { EmptyStateCompact } from '../components/ui/EmptyState';
 import { useTripStore, type Expense } from '@/store/useTripStore';
 
 export default function Budget() {
@@ -213,9 +214,12 @@ export default function Budget() {
                 </GlassCard>
               ))
             ) : (
-              <GlassCard className="p-8 text-center">
-                <p className="text-gray-500 mb-2">暂无消费记录</p>
-                <p className="text-sm text-gray-400">点击右上角"记一笔"开始记录</p>
+              <GlassCard className="p-4">
+                <EmptyStateCompact
+                  icon={Receipt}
+                  title="暂无消费记录"
+                  description='点击右上角"记一笔"开始记录'
+                />
               </GlassCard>
             )}
           </div>

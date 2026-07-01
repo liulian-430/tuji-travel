@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { MapPin, Search, Plus, Navigation, Layers, ChevronDown, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import GlassCard from '../components/ui/GlassCard';
+import EmptyState from '../components/ui/EmptyState';
 import { mockPOIs } from '../data/mock';
 import type { POI, TripPOI } from '../data/mock';
 import { useTripStore } from '@/store/useTripStore';
@@ -236,18 +237,13 @@ export default function Map() {
   if (trips.length === 0 || !selectedTrip) {
     return (
       <div className="min-h-screen pt-20 md:pt-8 flex items-center justify-center px-4">
-        <div className="text-center max-w-sm">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-primary flex items-center justify-center shadow-lg">
-            <MapPin size={36} className="text-white" />
-          </div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">还没有行程</h2>
-          <p className="text-gray-500 text-sm mb-6">
-            创建你的第一个行程，即可在地图上查看景点分布与每日路线。
-          </p>
-          <button onClick={() => navigate('/ai-planner')} className="gradient-button">
-            去创建行程
-          </button>
-        </div>
+        <EmptyState
+          icon={MapPin}
+          title="还没有行程"
+          description="创建你的第一个行程，即可在地图上查看景点分布与每日路线。"
+          actionText="去创建行程"
+          onAction={() => navigate('/ai-planner')}
+        />
       </div>
     );
   }

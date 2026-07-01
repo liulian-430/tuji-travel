@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Check, Calendar, MapPin, DollarSign, ChevronDown } from 'lucide-react';
-import { useTripStore } from '@/store/useTripStore';
-import { Trip } from '@/data/mock';
+import { useTripStore, type Trip } from '@/store/useTripStore';
 
 export default function NewTrip() {
   const navigate = useNavigate();

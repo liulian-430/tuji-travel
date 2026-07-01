@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Search as SearchIcon, X, History, TrendingUp, Heart } from 'lucide-react';
+import { Search as SearchIcon, X, History, TrendingUp, Heart, SearchX } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
+import { EmptyStateCompact } from '../components/ui/EmptyState';
 import POICard from '../components/poi/POICard';
 import { mockPOIs, userGuides } from '@/data/mock';
 
@@ -218,7 +219,13 @@ export default function Search() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyState keyword={query} />
+                  <GlassCard className="p-4">
+                    <EmptyStateCompact
+                      icon={SearchX}
+                      title={`未找到与「${query}」相关的结果`}
+                      description="换个关键词试试吧"
+                    />
+                  </GlassCard>
                 )}
               </>
             )}
@@ -236,7 +243,13 @@ export default function Search() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyState keyword={query} />
+                  <GlassCard className="p-4">
+                    <EmptyStateCompact
+                      icon={SearchX}
+                      title={`未找到与「${query}」相关的结果`}
+                      description="换个关键词试试吧"
+                    />
+                  </GlassCard>
                 )}
               </>
             )}
@@ -311,16 +324,6 @@ export default function Search() {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-// 空状态组件：搜索无结果时的友好提示
-function EmptyState({ keyword }: { keyword: string }) {
-  return (
-    <div className="text-center py-12">
-      <p className="text-gray-500">未找到与「{keyword}」相关的结果</p>
-      <p className="text-sm text-gray-400 mt-2">换个关键词试试吧</p>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { MapPin, Users, Calendar, ArrowRight, CheckCircle2, Share2, X, ImagePlus } from 'lucide-react';
 import GlassCard from '../ui/GlassCard';
-import { Trip, mockDaySchedules } from '../../data/mock';
+import { Trip } from '@/store/useTripStore';
 
 interface TripCardProps {
   trip: Trip;
@@ -15,14 +15,19 @@ export default function TripCard({ trip, onClick, onComplete, onShare }: TripCar
   const [shareContent, setShareContent] = useState('');
   const [shareImages, setShareImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const statusMap = {
+  const statusMap: Record<string, { label: string; color: string }> = {
     planning: { label: '规划中', color: 'bg-blue-500/20 text-blue-600' },
+    in_progress: { label: '进行中', color: 'bg-green-500/20 text-green-600' },
     ongoing: { label: '进行中', color: 'bg-green-500/20 text-green-600' },
     completed: { label: '已完成', color: 'bg-gray-500/20 text-gray-600' },
   };
 
-  const tripSchedule = mockDaySchedules.filter(s => s.tripId === trip.id);
-  const pois = tripSchedule.flatMap(s => s.items.map(i => i.poi));
+  // 优先使用 store 行程自带的 pois；若无则降级为空数组
+  const pois = trip.pois || [];
+  const nights = trip.nights ?? Math.max(0, trip.days - 1);
+  const people = trip.people ?? 1;
+  const coverImage = trip.coverImage || 'https://picsum.photos/seed/trip-default/600/400';
+  const statusInfo = statusMap[trip.status] || statusMap.planning;
 
   const handleShareClick = () => {
     if (onShare) {
@@ -31,7 +36,7 @@ export default function TripCard({ trip, onClick, onComplete, onShare }: TripCar
     setShowShareModal(true);
     setShareImages([]);
     // Generate default content
-    const defaultContent = `【${trip.name}】\n\n目的地：${trip.destination}\n行程天数：${trip.days}天${trip.nights}夜\n出发日期：${trip.startDate}\n\n行程亮点：\n${pois.slice(0, 5).map(p => `📍 ${p.name}`).join('\n')}\n\n分享我的精彩旅程！`;
+    const defaultContent = `【${trip.name}】\n\n目的地：${trip.destination}\n行程天数：${trip.days}天${nights}夜\n出发日期：${trip.startDate}\n\n行程亮点：\n${pois.slice(0, 5).map(p => `📍 ${p.name}`).join('\n')}\n\n分享我的精彩旅程！`;
     setShareContent(defaultContent);
   };
 
@@ -67,14 +72,14 @@ export default function TripCard({ trip, onClick, onComplete, onShare }: TripCar
       <GlassCard className="overflow-hidden" onClick={onClick}>
         <div className="relative h-40 overflow-hidden">
           <img
-            src={trip.coverImage}
+            src={coverImage}
             alt={trip.name}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           <div className="absolute top-3 right-3">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusMap[trip.status].color}`}>
-              {statusMap[trip.status].label}
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
+              {statusInfo.label}
             </span>
           </div>
           <div className="absolute bottom-3 left-3 right-3">
@@ -89,11 +94,11 @@ export default function TripCard({ trip, onClick, onComplete, onShare }: TripCar
             </div>
             <div className="flex items-center gap-1">
               <Calendar size={14} className="text-primary-mid" />
-              <span>{trip.days}天{trip.nights}夜</span>
+              <span>{trip.days}天{nights}夜</span>
             </div>
             <div className="flex items-center gap-1">
               <Users size={14} className="text-primary-mid" />
-              <span>{trip.people}人</span>
+              <span>{people}人</span>
             </div>
           </div>
           <div className="mt-3 flex items-center justify-between">
@@ -154,13 +159,13 @@ export default function TripCard({ trip, onClick, onComplete, onShare }: TripCar
               {/* Trip preview */}
               <div className="flex gap-4 p-4 rounded-2xl bg-gradient-to-r from-primary-mid/5 to-pink-500/5">
                 <img
-                  src={trip.coverImage}
+                  src={coverImage}
                   alt={trip.name}
                   className="w-20 h-20 rounded-2xl object-cover shadow-md"
                 />
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-800 text-lg">{trip.name}</h4>
-                  <p className="text-sm text-gray-500 mt-1">{trip.destination} · {trip.days}天{trip.nights}夜</p>
+                  <p className="text-sm text-gray-500 mt-1">{trip.destination} · {trip.days}天{nights}夜</p>
                   <p className="text-xs text-gray-400 mt-1">{trip.startDate}</p>
                 </div>
               </div>
