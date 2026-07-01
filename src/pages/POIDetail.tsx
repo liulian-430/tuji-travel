@@ -147,7 +147,7 @@ export default function POIDetail() {
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 glass-card mx-4 mb-4 p-4 flex items-center gap-4 md:hidden">
+      <div className="fixed bottom-24 left-0 right-0 glass-card mx-4 p-4 flex items-center gap-4 md:hidden z-30">
         <button
           onClick={() => setIsFavorited(!isFavorited)}
           className={`flex flex-col items-center gap-1 p-2 ${

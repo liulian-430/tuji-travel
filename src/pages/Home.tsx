@@ -148,7 +148,7 @@ export default function Home() {
           {/* Recommended Guides */}
           <div className="mb-10">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold text-gray-800/80">推荐攻略</h2>
+              <h2 className="text-lg font-semibold text-gray-800/80">发现</h2>
               <button className="flex items-center gap-1 text-primary-mid/80 text-sm font-medium">
                 <span>更多</span>
                 <ChevronRight size={16} />

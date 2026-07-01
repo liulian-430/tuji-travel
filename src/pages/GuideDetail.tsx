@@ -97,7 +97,7 @@ export default function GuideDetail() {
   const [selectedTrip, setSelectedTrip] = useState('');
 
   const guide = userGuides.find((g) => g.id === id) || userGuides[0];
-  const currentTrips = mockTrips.filter((t) => t.status !== 'completed');
+  const allTrips = mockTrips;
 
   const typeColors = {
     scenic: 'bg-green-500/20 text-green-600 border-green-500/30',
@@ -113,13 +113,13 @@ export default function GuideDetail() {
 
   const handleAddPoi = (poiName: string) => {
     setSelectedPoi(poiName);
-    setSelectedTrip(currentTrips[0]?.id || '');
+    setSelectedTrip(allTrips[0]?.id || '');
     setShowAddModal(true);
   };
 
   const handleAddAll = () => {
     setSelectedPoi('全部景点');
-    setSelectedTrip(currentTrips[0]?.id || '');
+    setSelectedTrip(allTrips[0]?.id || '');
     setShowAddModal(true);
   };
 
@@ -224,9 +224,9 @@ export default function GuideDetail() {
                       <h3 className="font-bold text-gray-800">{poi.name}</h3>
                       <button
                         onClick={() => handleAddPoi(poi.name)}
-                        className="p-2 rounded-lg bg-primary-mid/10 text-primary-mid hover:bg-primary-mid/20 transition-colors"
+                        className="w-9 h-9 rounded-full bg-gradient-primary text-white flex items-center justify-center shadow-lg shadow-primary-mid/30 hover:shadow-xl hover:shadow-primary-mid/40 transition-all active:scale-95"
                       >
-                        <Bookmark size={16} />
+                        <Plus size={18} />
                       </button>
                     </div>
                     <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
@@ -245,7 +245,7 @@ export default function GuideDetail() {
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 glass-card mx-4 mb-4 p-4 flex items-center gap-4 md:hidden">
+      <div className="fixed bottom-24 left-0 right-0 glass-card mx-4 p-4 flex items-center gap-4 md:hidden z-30">
         <button className="flex flex-col items-center gap-1 p-2 text-gray-500">
           <Heart size={22} />
           <span className="text-xs">收藏</span>
@@ -272,8 +272,9 @@ export default function GuideDetail() {
               将「{selectedPoi}」添加到：
             </p>
             <div className="space-y-2">
-              {currentTrips.length > 0 ? (
-                currentTrips.map((trip) => (
+              <p className="text-xs text-gray-400 font-medium mb-2">我的行程</p>
+              {allTrips.length > 0 ? (
+                allTrips.map((trip) => (
                   <button
                     key={trip.id}
                     onClick={() => setSelectedTrip(trip.id)}
@@ -297,14 +298,14 @@ export default function GuideDetail() {
                   </button>
                 ))
               ) : (
-                <p className="text-gray-400 text-sm text-center py-4">暂无进行中的行程</p>
+                <p className="text-gray-400 text-sm text-center py-4">暂无行程</p>
               )}
               <button
-                onClick={() => navigate('/new-trip')}
+                onClick={() => navigate('/profile')}
                 className="w-full p-3 rounded-xl border-2 border-dashed border-gray-200 text-gray-500 hover:border-primary-mid hover:text-primary-mid transition-all flex items-center justify-center gap-2"
               >
-                <Plus size={16} />
-                <span>创建新行程</span>
+                <Clock size={16} />
+                <span>选择历史行程</span>
               </button>
             </div>
             <div className="flex gap-3 mt-6">
