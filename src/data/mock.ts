@@ -76,8 +76,8 @@ export const mockPOIs: POI[] = [
     openTime: '08:30-17:00',
     description: '中国明清两代的皇家宫殿，世界上现存规模最大、保存最为完整的木质结构古建筑之一。',
     images: [
-      'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=800',
-      'https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=800',
+      'https://picsum.photos/seed/tuji101/800/600',
+      'https://picsum.photos/seed/tuji102/800/600',
     ],
     latitude: 39.9163,
     longitude: 116.3972,
@@ -93,7 +93,7 @@ export const mockPOIs: POI[] = [
     openTime: '07:00-18:00',
     description: '万里长城的代表段落之一，是明长城中保存最完整的一段。',
     images: [
-      'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=800',
+      'https://picsum.photos/seed/tuji103/800/600',
     ],
     latitude: 40.3652,
     longitude: 116.6044,
@@ -109,7 +109,7 @@ export const mockPOIs: POI[] = [
     openTime: '10:00-22:00',
     description: '正宗北京烤鸭，皮脆肉嫩，香气四溢。',
     images: [
-      'https://images.unsplash.com/photo-1518492104633-130d0cc84637?w=800',
+      'https://picsum.photos/seed/tuji104/800/600',
     ],
     latitude: 39.9042,
     longitude: 116.4074,
@@ -125,7 +125,7 @@ export const mockPOIs: POI[] = [
     openTime: '06:00-21:00',
     description: '明清两代帝王祭天、祈谷的场所，建筑宏伟壮观。',
     images: [
-      'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=800',
+      'https://picsum.photos/seed/tuji105/800/600',
     ],
     latitude: 39.9432,
     longitude: 116.4107,
@@ -141,7 +141,7 @@ export const mockPOIs: POI[] = [
     openTime: '全天开放',
     description: '北京最繁华的商业街之一，集购物、美食、娱乐于一体。',
     images: [
-      'https://images.unsplash.com/photo-1518492104633-130d0cc84637?w=800',
+      'https://picsum.photos/seed/tuji106/800/600',
     ],
     latitude: 39.9173,
     longitude: 116.4095,
@@ -157,7 +157,7 @@ export const mockPOIs: POI[] = [
     openTime: '06:00-20:00',
     description: '中国现存最大的皇家园林，集江南园林精华于一身。',
     images: [
-      'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=800',
+      'https://picsum.photos/seed/tuji107/800/600',
     ],
     latitude: 39.9999,
     longitude: 116.2708,
@@ -173,7 +173,7 @@ export const mockPOIs: POI[] = [
     openTime: '全天',
     description: '五星级酒店，位于王府井商业区，交通便利，服务一流。',
     images: [
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
+      'https://picsum.photos/seed/tuji108/800/600',
     ],
     latitude: 39.9175,
     longitude: 116.4130,
@@ -190,7 +190,7 @@ export const mockTrips: Trip[] = [
     people: 2,
     startDate: '2026-07-15',
     status: 'planning',
-    coverImage: 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=800',
+    coverImage: 'https://picsum.photos/seed/tuji109/800/600',
     createdAt: '2026-06-20',
   },
   {
@@ -202,7 +202,7 @@ export const mockTrips: Trip[] = [
     people: 1,
     startDate: '2026-08-01',
     status: 'planning',
-    coverImage: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=800',
+    coverImage: 'https://picsum.photos/seed/tuji110/800/600',
     createdAt: '2026-06-25',
   },
 ];
@@ -288,11 +288,11 @@ export const mockExpenses: Expense[] = [
 ];
 
 export const hotCities = [
-  { id: '1', name: '北京', image: 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=400' },
-  { id: '2', name: '上海', image: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=400' },
-  { id: '3', name: '成都', image: 'https://images.unsplash.com/photo-1518492104633-130d0cc84637?w=400' },
-  { id: '4', name: '杭州', image: 'https://images.unsplash.com/photo-1497523-6001c1a7d66a?w=400' },
-  { id: '5', name: '西安', image: 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=400' },
+  { id: '1', name: '北京', image: 'https://picsum.photos/seed/tuji111/400/300' },
+  { id: '2', name: '上海', image: 'https://picsum.photos/seed/tuji112/400/300' },
+  { id: '3', name: '成都', image: 'https://picsum.photos/seed/tuji113/400/300' },
+  { id: '4', name: '杭州', image: 'https://picsum.photos/seed/tuji114/400/300' },
+  { id: '5', name: '西安', image: 'https://picsum.photos/seed/tuji115/400/300' },
 ];
 
 export const travelPreferences = [
