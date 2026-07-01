@@ -166,7 +166,7 @@ export default function BottomNav() {
               </button>
 
               {isRecording && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 pointer-events-none" style={{ width: '200px', marginLeft: '-100px' }}>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 pointer-events-none" style={{ width: '240px' }}>
                   <div 
                     className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full"
                     style={{
