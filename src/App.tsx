@@ -23,6 +23,8 @@ function SwipeContainer({ children }: { children: React.ReactNode }) {
   const isHorizontal = useRef(false);
   const isAnimating = useRef(false);
   const [dragOffset, setDragOffset] = useState(0);
+  const isEdgeSwipe = useRef(false);
+  const EDGE_THRESHOLD = 35;
 
   const currentPageIndex = mainPages.indexOf(location.pathname);
   const isMainPage = currentPageIndex !== -1;
@@ -34,10 +36,14 @@ function SwipeContainer({ children }: { children: React.ReactNode }) {
     touchStartY.current = touch.clientY;
     isDragging.current = true;
     isHorizontal.current = false;
+    
+    const isLeftEdge = touch.clientX < EDGE_THRESHOLD;
+    const isRightEdge = touch.clientX > window.innerWidth - EDGE_THRESHOLD;
+    isEdgeSwipe.current = isLeftEdge || isRightEdge;
   }, [isMainPage]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!isDragging.current || !isMainPage) return;
+    if (!isDragging.current || !isMainPage || !isEdgeSwipe.current) return;
     const touch = e.touches[0];
     const diffX = touch.clientX - touchStartX.current;
     const diffY = touch.clientY - touchStartY.current;
@@ -61,13 +67,15 @@ function SwipeContainer({ children }: { children: React.ReactNode }) {
   }, [currentPageIndex, isMainPage]);
 
   const handleTouchEnd = useCallback(() => {
-    if (!isDragging.current || !isMainPage || !isHorizontal.current) {
+    if (!isDragging.current || !isMainPage || !isHorizontal.current || !isEdgeSwipe.current) {
       isDragging.current = false;
       isHorizontal.current = false;
+      isEdgeSwipe.current = false;
       return;
     }
     isDragging.current = false;
     isHorizontal.current = false;
+    isEdgeSwipe.current = false;
 
     const diffX = dragOffset;
     const threshold = 80;
