@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
 import Header from './components/layout/Header';
 import BottomNav from './components/layout/BottomNav';
 import Home from './pages/Home';
@@ -19,9 +19,10 @@ function SwipeContainer({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
-  const touchEndX = useRef(0);
-  const touchEndY = useRef(0);
   const isDragging = useRef(false);
+  const isHorizontal = useRef(false);
+  const isAnimating = useRef(false);
+  const [dragOffset, setDragOffset] = useState(0);
 
   const currentPageIndex = mainPages.indexOf(location.pathname);
   const isMainPage = currentPageIndex !== -1;
@@ -31,48 +32,66 @@ function SwipeContainer({ children }: { children: React.ReactNode }) {
     const touch = e.touches[0];
     touchStartX.current = touch.clientX;
     touchStartY.current = touch.clientY;
-    touchEndX.current = touch.clientX;
-    touchEndY.current = touch.clientY;
     isDragging.current = true;
+    isHorizontal.current = false;
   }, [isMainPage]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging.current || !isMainPage) return;
     const touch = e.touches[0];
-    touchEndX.current = touch.clientX;
-    touchEndY.current = touch.clientY;
+    const diffX = touch.clientX - touchStartX.current;
+    const diffY = touch.clientY - touchStartY.current;
 
-    const diffX = touchEndX.current - touchStartX.current;
-    const diffY = touchEndY.current - touchStartY.current;
-
-    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
-      e.preventDefault();
+    if (!isHorizontal.current) {
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+        isHorizontal.current = true;
+      } else if (Math.abs(diffY) > 10) {
+        return;
+      }
     }
-  }, [isMainPage]);
+
+    if (isHorizontal.current) {
+      e.preventDefault();
+      let offset = diffX;
+      if ((currentPageIndex === 0 && offset > 0) || (currentPageIndex === mainPages.length - 1 && offset < 0)) {
+        offset = offset * 0.3;
+      }
+      setDragOffset(offset);
+    }
+  }, [currentPageIndex, isMainPage]);
 
   const handleTouchEnd = useCallback(() => {
-    if (!isDragging.current || !isMainPage) {
+    if (!isDragging.current || !isMainPage || !isHorizontal.current) {
       isDragging.current = false;
+      isHorizontal.current = false;
       return;
     }
     isDragging.current = false;
+    isHorizontal.current = false;
 
-    const diffX = touchEndX.current - touchStartX.current;
-    const diffY = touchEndY.current - touchStartY.current;
+    const diffX = dragOffset;
+    const threshold = 80;
 
-    if (Math.abs(diffX) < Math.abs(diffY)) return;
-    if (Math.abs(diffX) < 80) return;
-
-    if (diffX > 0) {
-      if (currentPageIndex > 0) {
-        navigate(mainPages[currentPageIndex - 1]);
-      }
+    if (Math.abs(diffX) > threshold) {
+      isAnimating.current = true;
+      setDragOffset(diffX > 0 ? window.innerWidth : -window.innerWidth);
+      setTimeout(() => {
+        if (diffX > 0 && currentPageIndex > 0) {
+          navigate(mainPages[currentPageIndex - 1]);
+        } else if (diffX < 0 && currentPageIndex < mainPages.length - 1) {
+          navigate(mainPages[currentPageIndex + 1]);
+        }
+        setDragOffset(0);
+        isAnimating.current = false;
+      }, 250);
     } else {
-      if (currentPageIndex < mainPages.length - 1) {
-        navigate(mainPages[currentPageIndex + 1]);
-      }
+      isAnimating.current = true;
+      setDragOffset(0);
+      setTimeout(() => {
+        isAnimating.current = false;
+      }, 300);
     }
-  }, [currentPageIndex, isMainPage, navigate]);
+  }, [currentPageIndex, dragOffset, isMainPage, navigate]);
 
   useEffect(() => {
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
@@ -86,7 +105,23 @@ function SwipeContainer({ children }: { children: React.ReactNode }) {
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
-  return <>{children}</>;
+  const getSwipeStyle = (): React.CSSProperties => {
+    if (isAnimating.current || dragOffset !== 0) {
+      return {
+        transform: `translateX(${dragOffset}px)`,
+        transition: isDragging.current && isHorizontal.current ? 'none' : 'transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+      };
+    }
+    return {
+      animation: 'pageFadeIn 0.35s ease-out',
+    };
+  };
+
+  return (
+    <div style={getSwipeStyle()}>
+      {children}
+    </div>
+  );
 }
 
 export default function App() {
@@ -107,6 +142,18 @@ export default function App() {
             <Route path="/guide/:id" element={<GuideDetail />} />
           </Routes>
           <BottomNav />
+          <style>{`
+            @keyframes pageFadeIn {
+              0% {
+                opacity: 0.3;
+                transform: scale(0.99);
+              }
+              100% {
+                opacity: 1;
+                transform: scale(1);
+              }
+            }
+          `}</style>
         </div>
       </SwipeContainer>
     </Router>

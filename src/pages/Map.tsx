@@ -534,10 +534,23 @@ function SwipeableCard({ children, onDelete }: { children: React.ReactNode; onDe
 
   return (
     <div className="relative overflow-hidden rounded-2xl">
-      <div className="absolute right-0 top-0 bottom-0 w-18 flex items-center justify-center bg-gradient-to-l from-red-500 to-red-400 rounded-2xl" style={{ width: DELETE_WIDTH }}>
+      <div
+        className="absolute right-0 top-0 bottom-0 flex items-center justify-center rounded-2xl"
+        style={{
+          width: DELETE_WIDTH,
+          opacity: translateX < -5 ? 1 : 0,
+          transition: 'opacity 0.25s ease-out',
+          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.55), rgba(220, 38, 38, 0.45))',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderLeft: '1px solid rgba(239, 68, 68, 0.2)',
+          boxShadow: 'inset 0 0 20px rgba(239, 68, 68, 0.15)',
+        }}
+      >
         <button
           onClick={onDelete}
-          className="flex flex-col items-center gap-1 text-white"
+          className="flex flex-col items-center gap-1 text-red-50"
+          style={{ textShadow: '0 0 8px rgba(239, 68, 68, 0.5)' }}
         >
           <Trash2 size={20} />
           <span className="text-xs font-medium">删除</span>
