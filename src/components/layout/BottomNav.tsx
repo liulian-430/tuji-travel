@@ -85,6 +85,19 @@ export default function BottomNav() {
     }
   };
 
+  const bubbleLayers = [
+    { count: 12, sizeMin: 2, sizeMax: 5, durationMin: 2, durationMax: 3, spread: 50, scaleMax: 2, delayStep: 0.1 },
+    { count: 10, sizeMin: 5, sizeMax: 9, durationMin: 2.5, durationMax: 3.5, spread: 70, scaleMax: 2.5, delayStep: 0.15 },
+    { count: 6, sizeMin: 10, sizeMax: 16, durationMin: 3, durationMax: 4, spread: 90, scaleMax: 3, delayStep: 0.25 },
+  ];
+
+  const sparkles = Array.from({ length: 15 }, (_, i) => ({
+    size: 2 + Math.random() * 2,
+    offsetX: (Math.random() - 0.5) * 120,
+    delay: i * 0.12,
+    duration: 2 + Math.random() * 1.5,
+  }));
+
   return (
     <>
       <nav className="fixed bottom-0 left-0 right-0 md:hidden z-40">
@@ -115,60 +128,124 @@ export default function BottomNav() {
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
-                className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-2xl transition-all duration-300"
+                className="relative w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-2xl transition-all duration-500"
                 style={{
                   background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                   boxShadow: isRecording
-                    ? '0 0 30px rgba(99, 102, 241, 0.8), 0 0 60px rgba(139, 92, 246, 0.5), 0 0 90px rgba(99, 102, 241, 0.3)'
-                    : '0 10px 40px rgba(139, 92, 246, 0.5)',
-                  transform: isRecording ? 'scale(1.1)' : 'scale(1)',
-                  filter: isRecording ? 'blur(1px)' : 'none',
+                    ? '0 0 20px rgba(99, 102, 241, 0.6), 0 0 40px rgba(139, 92, 246, 0.4), 0 0 60px rgba(99, 102, 241, 0.2), inset 0 1px 1px rgba(255,255,255,0.4)'
+                    : '0 10px 40px rgba(139, 92, 246, 0.5), inset 0 1px 1px rgba(255,255,255,0.3)',
+                  transform: isRecording ? 'scale(1.08)' : 'scale(1)',
                 }}
               >
                 {isRecording ? (
-                  <svg className="w-8 h-8 animate-pulse" viewBox="0 0 24 24" fill="white">
-                    <rect x="4" y="4" width="16" height="16" rx="4" />
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="white" style={{ animation: 'recordPulse 1.2s ease-in-out infinite' }}>
+                    <rect x="6" y="6" width="12" height="12" rx="3" />
                   </svg>
                 ) : (
-                  <span>＋</span>
+                  <span style={{ textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>＋</span>
+                )}
+
+                {isRecording && (
+                  <>
+                    <div 
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        border: '2px solid rgba(255,255,255,0.6)',
+                        animation: 'ringPulse 2s ease-out infinite',
+                      }}
+                    />
+                    <div 
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        border: '2px solid rgba(165, 180, 252, 0.5)',
+                        animation: 'ringPulse 2s ease-out infinite 0.7s',
+                      }}
+                    />
+                  </>
                 )}
               </button>
 
               {isRecording && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 pointer-events-none">
-                  <div className="relative w-48 h-56 -ml-8">
-                    {[...Array(30)].map((_, i) => {
-                      const spread = (i % 10) / 10;
-                      const side = i % 2 === 0 ? 1 : -1;
-                      const offsetX = side * spread * 80 + (Math.random() - 0.5) * 20;
-                      const size = 4 + Math.random() * 4;
-                      const duration = 1.8 + Math.random() * 1.2;
-                      const delay = (i * 0.06) % 2;
-                      return (
-                        <div
-                          key={i}
-                          className="absolute rounded-full"
-                          style={{
-                            left: '50%',
-                            bottom: '0',
-                            width: `${size}px`,
-                            height: `${size}px`,
-                            background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(129,140,248,0.6), rgba(99,102,241,0.4))`,
-                            boxShadow: '0 0 4px rgba(129,140,248,0.5)',
-                            animation: `bubbleRise ${duration}s ease-out infinite`,
-                            animationDelay: `${delay}s`,
-                            '--bubble-x': `${offsetX}px`,
-                            '--bubble-scale': `${1.5 + Math.random() * 1.5}`,
-                          } as React.CSSProperties}
-                        />
-                      );
-                    })}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 pointer-events-none" style={{ width: '200px', marginLeft: '-100px' }}>
+                  <div 
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full"
+                    style={{
+                      width: '180px',
+                      height: '120px',
+                      background: 'radial-gradient(ellipse at center bottom, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.08) 40%, transparent 70%)',
+                      filter: 'blur(8px)',
+                      animation: 'glowBreath 3s ease-in-out infinite',
+                    }}
+                  />
+
+                  <div className="relative w-full h-64">
+                    {bubbleLayers.flatMap((layer, layerIdx) =>
+                      Array.from({ length: layer.count }, (_, i) => {
+                        const idx = layerIdx * 20 + i;
+                        const side = i % 2 === 0 ? 1 : -1;
+                        const spreadRatio = (i % Math.ceil(layer.count / 2)) / Math.ceil(layer.count / 2);
+                        const offsetX = side * spreadRatio * layer.spread + (Math.sin(idx * 0.7) * 15);
+                        const size = layer.sizeMin + Math.random() * (layer.sizeMax - layer.sizeMin);
+                        const duration = layer.durationMin + Math.random() * (layer.durationMax - layer.durationMin);
+                        const delay = (idx * layer.delayStep) % (layer.durationMax);
+                        const wobble = 8 + Math.random() * 12;
+                        return (
+                          <div
+                            key={`bubble-${idx}`}
+                            className="absolute rounded-full"
+                            style={{
+                              left: '50%',
+                              bottom: '0',
+                              width: `${size}px`,
+                              height: `${size}px`,
+                              background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95) 0%, rgba(219, 234, 254, 0.8) 30%, rgba(165, 180, 252, 0.6) 60%, rgba(129, 140, 248, 0.4) 100%)`,
+                              boxShadow: `inset 0 -${size/4}px ${size/2}px rgba(99, 102, 241, 0.2), 0 0 ${size/2}px rgba(139, 92, 246, 0.3)`,
+                              animation: `bubbleFloat ${duration}s ease-out infinite`,
+                              animationDelay: `${delay}s`,
+                              '--bubble-x': `${offsetX}px`,
+                              '--bubble-scale': `${layer.scaleMax}`,
+                              '--bubble-wobble': `${wobble}px`,
+                            } as React.CSSProperties}
+                          />
+                        );
+                      })
+                    )}
+
+                    {sparkles.map((s, i) => (
+                      <div
+                        key={`sparkle-${i}`}
+                        className="absolute rounded-full"
+                        style={{
+                          left: '50%',
+                          bottom: '20px',
+                          width: `${s.size}px`,
+                          height: `${s.size}px`,
+                          background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(191, 219, 254, 0.8) 40%, transparent 70%)',
+                          boxShadow: '0 0 6px rgba(255,255,255,0.8)',
+                          animation: `sparkleRise ${s.duration}s ease-out infinite`,
+                          animationDelay: `${s.delay}s`,
+                          '--sparkle-x': `${s.offsetX}px`,
+                        } as React.CSSProperties}
+                      />
+                    ))}
                   </div>
-                  
-                  <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                    <span className="text-xs text-gray-600/90 bg-white/90 backdrop-blur-xl px-4 py-2 rounded-full shadow-lg font-medium">
-                      松手进入AI规划 · 上划取消
-                    </span>
+
+                  <div 
+                    className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap"
+                    style={{ animation: 'hintFloat 2s ease-in-out infinite' }}
+                  >
+                    <div className="relative">
+                      <div 
+                        className="absolute inset-0 rounded-full blur-md"
+                        style={{
+                          background: 'rgba(139, 92, 246, 0.3)',
+                          transform: 'scale(1.1)',
+                        }}
+                      />
+                      <span className="relative text-xs text-indigo-600/90 bg-white/95 backdrop-blur-xl px-5 py-2.5 rounded-full shadow-xl font-medium border border-indigo-100">
+                        🎙️ 正在聆听...
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -242,26 +319,93 @@ export default function BottomNav() {
       )}
 
       <style>{`
-        @keyframes bubbleRise {
+        @keyframes bubbleFloat {
           0% {
-            transform: translateY(0) translateX(0) scale(0.3);
+            transform: translateY(0) translateX(0) scale(0.2);
+            opacity: 0;
+          }
+          10% {
             opacity: 1;
           }
-          30% {
+          25% {
+            transform: translateY(-40px) translateX(calc(var(--bubble-wobble) * 0.3)) scale(0.5);
+          }
+          50% {
+            transform: translateY(-100px) translateX(calc(var(--bubble-x) * 0.5 - var(--bubble-wobble) * 0.2)) scale(0.8);
             opacity: 0.9;
           }
-          70% {
+          75% {
+            transform: translateY(-160px) translateX(calc(var(--bubble-x) * 0.8 + var(--bubble-wobble) * 0.15)) scale(calc(var(--bubble-scale) * 0.8));
             opacity: 0.6;
           }
           90% {
-            transform: translateY(-180px) translateX(var(--bubble-x)) scale(var(--bubble-scale));
+            transform: translateY(-200px) translateX(var(--bubble-x)) scale(var(--bubble-scale));
             opacity: 0.3;
           }
           100% {
-            transform: translateY(-200px) translateX(calc(var(--bubble-x) * 1.1)) scale(calc(var(--bubble-scale) * 1.3));
+            transform: translateY(-230px) translateX(calc(var(--bubble-x) * 1.05)) scale(calc(var(--bubble-scale) * 1.2));
             opacity: 0;
           }
         }
+
+        @keyframes sparkleRise {
+          0% {
+            transform: translateY(0) translateX(0) scale(0);
+            opacity: 0;
+          }
+          20% {
+            transform: translateY(-30px) translateX(calc(var(--sparkle-x) * 0.3)) scale(1);
+            opacity: 1;
+          }
+          60% {
+            opacity: 0.8;
+          }
+          100% {
+            transform: translateY(-180px) translateX(var(--sparkle-x)) scale(0.3);
+            opacity: 0;
+          }
+        }
+
+        @keyframes ringPulse {
+          0% {
+            transform: scale(1);
+            opacity: 0.8;
+          }
+          100% {
+            transform: scale(2.2);
+            opacity: 0;
+          }
+        }
+
+        @keyframes recordPulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.1);
+          }
+        }
+
+        @keyframes glowBreath {
+          0%, 100% {
+            opacity: 0.6;
+            transform: translateX(-50%) scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: translateX(-50%) scale(1.15);
+          }
+        }
+
+        @keyframes hintFloat {
+          0%, 100% {
+            transform: translateX(-50%) translateY(0);
+          }
+          50% {
+            transform: translateX(-50%) translateY(-4px);
+          }
+        }
+
         @keyframes modalPopIn {
           0% {
             opacity: 0;
