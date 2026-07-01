@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { MapPin, Search, Plus, Navigation, Layers, ChevronDown } from 'lucide-react';
+import { useState, useMemo, useRef } from 'react';
+import { MapPin, Search, Plus, Navigation, Layers, ChevronDown, Trash2 } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
 import { mockTrips, mockDaySchedules, mockPOIs } from '../data/mock';
 
@@ -139,6 +139,18 @@ export default function Map() {
     });
 
     if (viewMode === currentDay) {
+      setSelectedPoi(null);
+    }
+  };
+
+  const handleDeletePoi = (poiId: string, dayIndex: number) => {
+    setSchedules(prev => prev.map(schedule => {
+      if (schedule.dayIndex === dayIndex) {
+        return { ...schedule, items: schedule.items.filter(i => i.id !== poiId) };
+      }
+      return schedule;
+    }));
+    if (selectedPoi === poiId) {
       setSelectedPoi(null);
     }
   };
@@ -331,62 +343,65 @@ export default function Map() {
               const dayColorIndex = (item.dayIndex - 1) % dayButtonColors.length;
               
               return (
-                <GlassCard
+                <SwipeableCard
                   key={item.id}
-                  className={`overflow-hidden cursor-pointer transition-all ${
-                    isSelected ? 'ring-2 ring-primary-mid' : ''
-                  }`}
-                  onClick={() => handlePoiClick(item.id, item.dayIndex)}
+                  onDelete={() => handleDeletePoi(item.id, item.dayIndex)}
                 >
-                  <div className="flex items-start gap-3 p-4">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md flex-shrink-0"
-                      style={{
-                        background: `linear-gradient(135deg, ${dayButtonColors[dayColorIndex].split(' ').slice(0, 2).join(', ')})`,
-                      }}
-                    >
-                      {index + 1}
-                    </div>
-                    
-                    <img
-                      src={item.poi.images[0]}
-                      alt={item.poi.name}
-                      className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
-                    />
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-xs px-2 py-0.5 rounded border ${typeColors[item.type]}`}>
-                          {typeLabels[item.type]}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {item.startTime}
-                        </span>
-                      </div>
-                      <h4 className="font-medium text-gray-800 truncate">
-                        {item.poi.name}
-                      </h4>
-                      <p className="text-xs text-gray-500 mt-1 truncate">
-                        {item.poi.address}
-                      </p>
-                    </div>
-                    
-                    {/* Move to different day dropdown */}
-                    <div className="relative">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setPoiToAdd(item.id);
-                          setShowAddDayModal(true);
+                  <GlassCard
+                    className={`overflow-hidden cursor-pointer transition-all ${
+                      isSelected ? 'ring-2 ring-primary-mid' : ''
+                    }`}
+                    onClick={() => handlePoiClick(item.id, item.dayIndex)}
+                  >
+                    <div className="flex items-start gap-3 p-4">
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md flex-shrink-0"
+                        style={{
+                          background: `linear-gradient(135deg, ${dayButtonColors[dayColorIndex].split(' ').slice(0, 2).join(', ')})`,
                         }}
-                        className="p-2 rounded-lg hover:bg-white/50 transition-colors flex items-center gap-1"
                       >
-                        <span className="text-xs text-gray-500">Day{item.dayIndex}</span>
-                        <ChevronDown size={14} className="text-gray-400" />
-                      </button>
+                        {index + 1}
+                      </div>
+                      
+                      <img
+                        src={item.poi.images[0]}
+                        alt={item.poi.name}
+                        className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                      />
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-xs px-2 py-0.5 rounded border ${typeColors[item.type]}`}>
+                            {typeLabels[item.type]}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {item.startTime}
+                          </span>
+                        </div>
+                        <h4 className="font-medium text-gray-800 truncate">
+                          {item.poi.name}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-1 truncate">
+                          {item.poi.address}
+                        </p>
+                      </div>
+                      
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPoiToAdd(item.id);
+                            setShowAddDayModal(true);
+                          }}
+                          className="p-2 rounded-lg hover:bg-white/50 transition-colors flex items-center gap-1"
+                        >
+                          <span className="text-xs text-gray-500">Day{item.dayIndex}</span>
+                          <ChevronDown size={14} className="text-gray-400" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </GlassCard>
+                  </GlassCard>
+                </SwipeableCard>
               );
             })}
           </div>
@@ -446,6 +461,103 @@ export default function Map() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function SwipeableCard({ children, onDelete }: { children: React.ReactNode; onDelete: () => void }) {
+  const [translateX, setTranslateX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startXRef = useRef(0);
+  const currentXRef = useRef(0);
+  const DELETE_THRESHOLD = 80;
+  const DELETE_WIDTH = 72;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startXRef.current = e.touches[0].clientX;
+    currentXRef.current = translateX;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const diff = e.touches[0].clientX - startXRef.current;
+    let newX = currentXRef.current + diff;
+    if (newX > 0) newX = newX * 0.3;
+    if (newX < -DELETE_WIDTH * 1.5) newX = -DELETE_WIDTH * 1.5;
+    setTranslateX(newX);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    if (translateX < -DELETE_THRESHOLD) {
+      setTranslateX(-DELETE_WIDTH);
+    } else {
+      setTranslateX(0);
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    startXRef.current = e.clientX;
+    currentXRef.current = translateX;
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const diff = e.clientX - startXRef.current;
+    let newX = currentXRef.current + diff;
+    if (newX > 0) newX = newX * 0.3;
+    if (newX < -DELETE_WIDTH * 1.5) newX = -DELETE_WIDTH * 1.5;
+    setTranslateX(newX);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    if (translateX < -DELETE_THRESHOLD) {
+      setTranslateX(-DELETE_WIDTH);
+    } else {
+      setTranslateX(0);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      if (translateX < -DELETE_THRESHOLD) {
+        setTranslateX(-DELETE_WIDTH);
+      } else {
+        setTranslateX(0);
+      }
+    }
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl">
+      <div className="absolute right-0 top-0 bottom-0 w-18 flex items-center justify-center bg-gradient-to-l from-red-500 to-red-400 rounded-2xl" style={{ width: DELETE_WIDTH }}>
+        <button
+          onClick={onDelete}
+          className="flex flex-col items-center gap-1 text-white"
+        >
+          <Trash2 size={20} />
+          <span className="text-xs font-medium">删除</span>
+        </button>
+      </div>
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          transform: `translateX(${translateX}px)`,
+          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }

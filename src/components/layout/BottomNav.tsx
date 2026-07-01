@@ -86,9 +86,9 @@ export default function BottomNav() {
   };
 
   const bubbleLayers = [
-    { count: 20, sizeMin: 2, sizeMax: 4, durationMin: 2.5, durationMax: 3.5, spread: 60, scaleMax: 2.5, delayStep: 0.06 },
-    { count: 18, sizeMin: 4, sizeMax: 8, durationMin: 3, durationMax: 4, spread: 80, scaleMax: 3, delayStep: 0.08 },
-    { count: 12, sizeMin: 8, sizeMax: 14, durationMin: 3.5, durationMax: 4.5, spread: 100, scaleMax: 3.5, delayStep: 0.12 },
+    { count: 40, sizeMin: 1.5, sizeMax: 3, durationMin: 2, durationMax: 3, spread: 50, scaleMax: 2, delayStep: 0.04 },
+    { count: 35, sizeMin: 3, sizeMax: 6, durationMin: 2.5, durationMax: 3.5, spread: 65, scaleMax: 2.2, delayStep: 0.05 },
+    { count: 25, sizeMin: 5, sizeMax: 10, durationMin: 3, durationMax: 4, spread: 85, scaleMax: 2.5, delayStep: 0.07 },
   ];
 
   const sparkles = Array.from({ length: 20 }, (_, i) => ({
@@ -185,10 +185,12 @@ export default function BottomNav() {
                         const side = i % 2 === 0 ? 1 : -1;
                         const spreadRatio = (i % Math.ceil(layer.count / 2)) / Math.ceil(layer.count / 2);
                         const offsetX = side * spreadRatio * layer.spread + (Math.sin(idx * 0.5) * 12);
+                        const startX = side * (Math.random() * 28 - 14);
                         const size = layer.sizeMin + Math.random() * (layer.sizeMax - layer.sizeMin);
                         const duration = layer.durationMin + Math.random() * (layer.durationMax - layer.durationMin);
                         const delay = (idx * layer.delayStep) % layer.durationMax;
-                        const wobble = 6 + Math.random() * 10;
+                        const wobble = 4 + Math.random() * 8;
+                        const popDelay = 0.82 + Math.random() * 0.08;
                         return (
                           <div
                             key={`bubble-${idx}`}
@@ -198,13 +200,15 @@ export default function BottomNav() {
                               bottom: '0',
                               width: `${size}px`,
                               height: `${size}px`,
-                              background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95) 0%, rgba(219, 234, 254, 0.8) 30%, rgba(165, 180, 252, 0.6) 60%, rgba(129, 140, 248, 0.4) 100%)`,
-                              boxShadow: `inset 0 -${size/4}px ${size/2}px rgba(99, 102, 241, 0.2), 0 0 ${size/2}px rgba(139, 92, 246, 0.3)`,
+                              background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95) 0%, rgba(219, 234, 254, 0.8) 25%, rgba(165, 180, 252, 0.55) 55%, rgba(129, 140, 248, 0.35) 100%)`,
+                              boxShadow: `inset 0 -${size/4}px ${size/2}px rgba(99, 102, 241, 0.2), 0 0 ${size/2}px rgba(139, 92, 246, 0.25)`,
                               animation: `bubbleFloat ${duration}s linear infinite`,
                               animationDelay: `${delay}s`,
                               '--bubble-x': `${offsetX}px`,
+                              '--bubble-start-x': `${startX}px`,
                               '--bubble-scale': `${layer.scaleMax}`,
                               '--bubble-wobble': `${wobble}px`,
+                              '--bubble-pop': `${popDelay}`,
                             } as React.CSSProperties}
                           />
                         );
@@ -321,37 +325,50 @@ export default function BottomNav() {
       <style>{`
         @keyframes bubbleFloat {
           0% {
-            transform: translateY(0) translateX(0) scale(0.3);
+            transform: translateY(0) translateX(var(--bubble-start-x)) scale(0.2);
             opacity: 0;
           }
-          8% {
-            opacity: 1;
-          }
-          20% {
-            transform: translateY(-50px) translateX(calc(var(--bubble-wobble) * 0.4)) scale(0.5);
-          }
-          40% {
-            transform: translateY(-100px) translateX(calc(var(--bubble-x) * 0.3 - var(--bubble-wobble) * 0.3)) scale(0.7);
-          }
-          60% {
-            transform: translateY(-150px) translateX(calc(var(--bubble-x) * 0.6 + var(--bubble-wobble) * 0.2)) scale(0.85);
+          6% {
             opacity: 0.9;
           }
-          80% {
-            transform: translateY(-200px) translateX(calc(var(--bubble-x) * 0.85 - var(--bubble-wobble) * 0.1)) scale(var(--bubble-scale));
+          15% {
+            transform: translateY(-40px) translateX(calc(var(--bubble-start-x) + var(--bubble-wobble) * 0.3)) scale(0.4);
+            opacity: 1;
+          }
+          30% {
+            transform: translateY(-80px) translateX(calc(var(--bubble-x) * 0.2 - var(--bubble-wobble) * 0.2)) scale(0.6);
+          }
+          50% {
+            transform: translateY(-130px) translateX(calc(var(--bubble-x) * 0.45 + var(--bubble-wobble) * 0.15)) scale(0.8);
+            opacity: 0.95;
+          }
+          65% {
+            transform: translateY(-170px) translateX(calc(var(--bubble-x) * 0.7 - var(--bubble-wobble) * 0.1)) scale(0.95);
+            opacity: 0.85;
+          }
+          78% {
+            transform: translateY(calc(-200px + var(--bubble-wobble))) translateX(calc(var(--bubble-x) * 0.9)) scale(var(--bubble-scale));
             opacity: 0.6;
           }
-          90% {
-            transform: translateY(-220px) translateX(calc(var(--bubble-x) * 0.95)) scale(calc(var(--bubble-scale) * 1.2));
+          83% {
+            transform: translateY(calc(-205px + var(--bubble-wobble))) translateX(calc(var(--bubble-x) * 0.92)) scale(calc(var(--bubble-scale) * 1.35));
             opacity: 0.3;
+            filter: blur(0.5px);
           }
-          95% {
-            transform: translateY(-230px) translateX(var(--bubble-x)) scale(calc(var(--bubble-scale) * 1.4));
-            opacity: 0.1;
+          86% {
+            transform: translateY(calc(-210px + var(--bubble-wobble))) translateX(calc(var(--bubble-x) * 0.95)) scale(calc(var(--bubble-scale) * 2));
+            opacity: 0.08;
+            filter: blur(2px);
+          }
+          90% {
+            transform: translateY(calc(-215px + var(--bubble-wobble))) translateX(var(--bubble-x)) scale(calc(var(--bubble-scale) * 2.8));
+            opacity: 0;
+            filter: blur(5px);
           }
           100% {
-            transform: translateY(-240px) translateX(calc(var(--bubble-x) * 1.05)) scale(0);
+            transform: translateY(-220px) translateX(var(--bubble-x)) scale(0);
             opacity: 0;
+            filter: blur(8px);
           }
         }
 
