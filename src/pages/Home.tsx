@@ -29,17 +29,28 @@ export default function Home() {
           </div>
 
           {/* Search Bar - More transparent/glass */}
-          <div className="bg-white/30 backdrop-blur-xl border border-white/40 rounded-2xl px-5 py-4 mb-8 flex items-center gap-3 shadow-xl shadow-white/20">
+          <div 
+            className="bg-white/30 backdrop-blur-xl border border-white/40 rounded-2xl px-5 py-4 mb-8 flex items-center gap-3 shadow-xl shadow-white/20 cursor-pointer"
+            onClick={() => navigate('/search')}
+          >
             <Search size={20} className="text-gray-400/70" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
               placeholder="搜索景点、美食、酒店..."
-              className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-400/60 text-base"
+              className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-400/60 text-base pointer-events-none"
             />
             <button 
-              onClick={() => navigate('/search')}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(searchQuery.trim() ? `/search?q=${encodeURIComponent(searchQuery.trim())}` : '/search');
+              }}
               className="px-4 py-2 bg-gradient-primary rounded-xl text-white text-sm font-medium shadow-lg shadow-primary-mid/30"
             >
               搜索
