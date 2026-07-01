@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import AIPlanner from './pages/AIPlanner';
 import NewTrip from './pages/NewTrip';
 import Map from './pages/Map';
+import Search from './pages/Search';
 import POIDetail from './pages/POIDetail';
 import TripDetail from './pages/TripDetail';
 import Budget from './pages/Budget';
@@ -143,6 +144,7 @@ export default function App() {
             <Route path="/ai-planner" element={<AIPlanner />} />
             <Route path="/new-trip" element={<NewTrip />} />
             <Route path="/map" element={<Map />} />
+            <Route path="/search" element={<Search />} />
             <Route path="/poi/:id" element={<POIDetail />} />
             <Route path="/trip/:id" element={<TripDetail />} />
             <Route path="/budget/:tripId" element={<Budget />} />

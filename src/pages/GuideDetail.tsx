@@ -1,103 +1,20 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Heart, Clock, MapPin, Bookmark, Plus, User, Share2 } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
-import { mockTrips } from '../data/mock';
 import { useState } from 'react';
-
-const userGuides = [
-  {
-    id: '1',
-    title: '北京4天3晚深度游攻略',
-    author: '旅行达人小王',
-    avatar: '王',
-    image: 'https://picsum.photos/seed/tuji119/800/600',
-    likes: 1256,
-    views: 8934,
-    days: 4,
-    nights: 3,
-    destination: '北京',
-    budget: 3000,
-    people: 2,
-    description: '本次北京之旅，我们将带你探访故宫、长城、天坛等著名景点，品尝正宗北京烤鸭，体验老北京胡同文化。行程安排合理，适合首次来京的游客。',
-    poiDetails: [
-      {
-        name: '故宫博物院',
-        type: 'scenic',
-        duration: '3小时',
-        price: 60,
-        description: '中国明清两代的皇家宫殿，世界上现存规模最大、保存最为完整的木质结构古建筑之一。',
-        image: 'https://picsum.photos/seed/tuji120/800/600',
-      },
-      {
-        name: '八达岭长城',
-        type: 'scenic',
-        duration: '4小时',
-        price: 45,
-        description: '万里长城的代表段落之一，是明长城中保存最完整的一段。',
-        image: 'https://picsum.photos/seed/tuji121/800/600',
-      },
-      {
-        name: '北京烤鸭店',
-        type: 'food',
-        duration: '1.5小时',
-        price: 200,
-        description: '正宗北京烤鸭，皮脆肉嫩，香气四溢。',
-        image: 'https://picsum.photos/seed/tuji122/800/600',
-      },
-      {
-        name: '天坛公园',
-        type: 'scenic',
-        duration: '2小时',
-        price: 34,
-        description: '明清两代帝王祭天、祈谷的场所，建筑宏伟壮观。',
-        image: 'https://picsum.photos/seed/tuji123/800/600',
-      },
-    ],
-  },
-  {
-    id: '2',
-    title: '上海迪士尼亲子游全攻略',
-    author: '妈妈爱旅行',
-    avatar: '妈',
-    image: 'https://picsum.photos/seed/tuji124/800/600',
-    likes: 892,
-    views: 5621,
-    days: 3,
-    nights: 2,
-    destination: '上海',
-    budget: 4500,
-    people: 3,
-    description: '带孩子玩转上海迪士尼，包含最佳游玩路线、快速通行证攻略、亲子餐厅推荐，让你的迪士尼之旅不留遗憾。',
-    poiDetails: [
-      {
-        name: '上海迪士尼乐园',
-        type: 'scenic',
-        duration: '全天',
-        price: 599,
-        description: '中国内地首座迪士尼主题乐园，包含七大主题园区。',
-        image: 'https://picsum.photos/seed/tuji125/800/600',
-      },
-      {
-        name: '外滩',
-        type: 'scenic',
-        duration: '2小时',
-        price: 0,
-        description: '上海最具代表性的景观，可欣赏陆家嘴天际线夜景。',
-        image: 'https://picsum.photos/seed/tuji126/800/600',
-      },
-    ],
-  },
-];
+import { useTripStore } from '@/store/useTripStore';
+import { userGuides } from '@/data/mock';
 
 export default function GuideDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { trips, addPOIToTrip } = useTripStore();
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedPoi, setSelectedPoi] = useState('');
   const [selectedTrip, setSelectedTrip] = useState('');
 
   const guide = userGuides.find((g) => g.id === id) || userGuides[0];
-  const allTrips = mockTrips;
+  const allTrips = trips;
 
   const typeColors = {
     scenic: 'bg-green-500/20 text-green-600 border-green-500/30',
@@ -271,42 +188,72 @@ export default function GuideDetail() {
             <p className="text-gray-600 mb-4">
               将「{selectedPoi}」添加到：
             </p>
-            <div className="space-y-2">
-              <p className="text-xs text-gray-400 font-medium mb-2">我的行程</p>
+            <div className="space-y-2 max-h-72 overflow-y-auto">
               {allTrips.length > 0 ? (
-                allTrips.map((trip) => (
-                  <button
-                    key={trip.id}
-                    onClick={() => setSelectedTrip(trip.id)}
-                    className={`w-full p-3 rounded-xl text-left transition-all ${
-                      selectedTrip === trip.id
-                        ? 'bg-primary-mid/10 ring-2 ring-primary-mid'
-                        : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-800">{trip.name}</p>
-                        <p className="text-xs text-gray-500">{trip.destination} · {trip.days}天</p>
-                      </div>
-                      {selectedTrip === trip.id && (
-                        <div className="w-5 h-5 rounded-full bg-primary-mid flex items-center justify-center">
-                          <Plus size={14} className="text-white" />
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                ))
+                <>
+                  {allTrips.filter(t => t.status !== 'completed').length > 0 && (
+                    <>
+                      <p className="text-xs text-gray-400 font-medium mb-2">进行中</p>
+                      {allTrips.filter(t => t.status !== 'completed').map((trip) => (
+                        <button
+                          key={trip.id}
+                          onClick={() => setSelectedTrip(trip.id)}
+                          className={`w-full p-3 rounded-xl text-left transition-all ${
+                            selectedTrip === trip.id
+                              ? 'bg-primary-mid/10 ring-2 ring-primary-mid'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-gray-800">{trip.name}</p>
+                              <p className="text-xs text-gray-500">{trip.destination} · {trip.days}天</p>
+                            </div>
+                            {selectedTrip === trip.id && (
+                              <div className="w-5 h-5 rounded-full bg-primary-mid flex items-center justify-center">
+                                <Plus size={14} className="text-white" />
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  {allTrips.filter(t => t.status === 'completed').length > 0 && (
+                    <>
+                      <p className="text-xs text-gray-400 font-medium mb-2 mt-4">历史行程</p>
+                      {allTrips.filter(t => t.status === 'completed').map((trip) => (
+                        <button
+                          key={trip.id}
+                          onClick={() => setSelectedTrip(trip.id)}
+                          className={`w-full p-3 rounded-xl text-left transition-all ${
+                            selectedTrip === trip.id
+                              ? 'bg-primary-mid/10 ring-2 ring-primary-mid'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-gray-800 flex items-center gap-2">
+                                {trip.name}
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-500">已完成</span>
+                              </p>
+                              <p className="text-xs text-gray-500">{trip.destination} · {trip.days}天</p>
+                            </div>
+                            {selectedTrip === trip.id && (
+                              <div className="w-5 h-5 rounded-full bg-primary-mid flex items-center justify-center">
+                                <Plus size={14} className="text-white" />
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  )}
+                </>
               ) : (
-                <p className="text-gray-400 text-sm text-center py-4">暂无行程</p>
+                <p className="text-gray-400 text-sm text-center py-4">暂无行程，快去创建一个吧</p>
               )}
-              <button
-                onClick={() => navigate('/profile')}
-                className="w-full p-3 rounded-xl border-2 border-dashed border-gray-200 text-gray-500 hover:border-primary-mid hover:text-primary-mid transition-all flex items-center justify-center gap-2"
-              >
-                <Clock size={16} />
-                <span>选择历史行程</span>
-              </button>
             </div>
             <div className="flex gap-3 mt-6">
               <button

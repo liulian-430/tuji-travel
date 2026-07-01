@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Sparkles, Mic, ChevronUp, ChevronDown, Trash2, Plus, MapPin, Calendar, Users, DollarSign, Utensils, Building, X } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
-import { mockPOIs, DaySchedule } from '../data/mock';
+import { mockPOIs, DaySchedule, TripPOI } from '../data/mock';
+import { useTripStore } from '@/store/useTripStore';
 
 export default function AIPlanner() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { setPendingTrip } = useTripStore();
   const [activeTab, setActiveTab] = useState<'ai' | 'custom'>('ai');
   const [aiInput, setAiInput] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -371,7 +373,22 @@ export default function AIPlanner() {
                     重新生成
                   </button>
                   <button
-                    onClick={() => navigate('/trip/new')}
+                    onClick={() => {
+                      const allPOIs: TripPOI[] = [];
+                      schedules.forEach((day) => {
+                        day.morning?.forEach((p) => allPOIs.push(p));
+                        day.afternoon?.forEach((p) => allPOIs.push(p));
+                        day.evening?.forEach((p) => allPOIs.push(p));
+                      });
+                      setPendingTrip({
+                        name: `${destination || '北京'}${days}日游`,
+                        destination: destination || '北京',
+                        days,
+                        schedules,
+                        pois: allPOIs,
+                      });
+                      navigate('/trip/new');
+                    }}
                     className="gradient-button text-sm px-4 py-2"
                   >
                     保存行程

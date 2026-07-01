@@ -64,6 +64,51 @@ export interface Expense {
   note: string;
 }
 
+export interface TripPOI {
+  id: string;
+  name: string;
+  type: 'scenic' | 'food' | 'hotel' | 'shopping';
+  duration: string;
+  price: number;
+  image: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface DayScheduleSimple {
+  day: number;
+  morning?: TripPOI[];
+  afternoon?: TripPOI[];
+  evening?: TripPOI[];
+}
+
+export interface GuidePOI {
+  name: string;
+  type: 'scenic' | 'food' | 'hotel' | 'shopping';
+  duration: string;
+  price: number;
+  description: string;
+  image: string;
+}
+
+export interface Guide {
+  id: string;
+  title: string;
+  author: string;
+  avatar: string;
+  image: string;
+  likes: number;
+  views: number;
+  days: number;
+  nights: number;
+  destination: string;
+  budget: number;
+  people: number;
+  description: string;
+  pois: string[];
+  poiDetails: GuidePOI[];
+}
+
 export const mockPOIs: POI[] = [
   {
     id: '1',
@@ -302,4 +347,125 @@ export const travelPreferences = [
   { id: '4', name: '城市漫步', icon: 'MapPin', color: 'text-blue-500' },
   { id: '5', name: '亲子乐园', icon: 'Baby', color: 'text-pink-500' },
   { id: '6', name: '购物娱乐', icon: 'ShoppingBag', color: 'text-purple-500' },
+];
+
+export const userGuides: Guide[] = [
+  {
+    id: '1',
+    title: '北京4天3晚深度游攻略',
+    author: '旅行达人小王',
+    avatar: '王',
+    image: 'https://picsum.photos/seed/tuji116/800/600',
+    likes: 1256,
+    views: 8934,
+    days: 4,
+    nights: 3,
+    destination: '北京',
+    budget: 3000,
+    people: 2,
+    description: '本次北京之旅，我们将带你探访故宫、长城、天坛等著名景点，品尝正宗北京烤鸭，体验老北京胡同文化。行程安排合理，适合首次来京的游客。',
+    pois: ['故宫博物院', '八达岭长城', '天坛公园'],
+    poiDetails: [
+      {
+        name: '故宫博物院',
+        type: 'scenic',
+        duration: '3小时',
+        price: 60,
+        description: '中国明清两代的皇家宫殿，世界上现存规模最大、保存最为完整的木质结构古建筑之一。',
+        image: 'https://picsum.photos/seed/tuji120/800/600',
+      },
+      {
+        name: '八达岭长城',
+        type: 'scenic',
+        duration: '4小时',
+        price: 45,
+        description: '万里长城的代表段落之一，是明长城中保存最完整的一段。',
+        image: 'https://picsum.photos/seed/tuji121/800/600',
+      },
+      {
+        name: '北京烤鸭店',
+        type: 'food',
+        duration: '1.5小时',
+        price: 200,
+        description: '正宗北京烤鸭，皮脆肉嫩，香气四溢。',
+        image: 'https://picsum.photos/seed/tuji122/800/600',
+      },
+      {
+        name: '天坛公园',
+        type: 'scenic',
+        duration: '2小时',
+        price: 34,
+        description: '明清两代帝王祭天、祈谷的场所，建筑宏伟壮观。',
+        image: 'https://picsum.photos/seed/tuji123/800/600',
+      },
+    ],
+  },
+  {
+    id: '2',
+    title: '上海迪士尼亲子游全攻略',
+    author: '妈妈爱旅行',
+    avatar: '妈',
+    image: 'https://picsum.photos/seed/tuji117/800/600',
+    likes: 892,
+    views: 5621,
+    days: 3,
+    nights: 2,
+    destination: '上海',
+    budget: 4000,
+    people: 3,
+    description: '带娃玩转上海迪士尼，最全攻略来袭！包含必玩项目、餐饮推荐和省时技巧。',
+    pois: ['迪士尼乐园', '外滩', '南京路'],
+    poiDetails: [
+      {
+        name: '上海迪士尼乐园',
+        type: 'scenic',
+        duration: '全天',
+        price: 435,
+        description: '中国内地首座迪士尼主题乐园，拥有七大主题园区。',
+        image: 'https://picsum.photos/seed/tuji127/800/600',
+      },
+      {
+        name: '外滩',
+        type: 'scenic',
+        duration: '2小时',
+        price: 0,
+        description: '上海最具代表性的景观，可欣赏陆家嘴天际线夜景。',
+        image: 'https://picsum.photos/seed/tuji125/800/600',
+      },
+    ],
+  },
+  {
+    id: '3',
+    title: '成都美食探店之旅',
+    author: '吃货小李',
+    avatar: '李',
+    image: 'https://picsum.photos/seed/tuji118/800/600',
+    likes: 2341,
+    views: 12567,
+    days: 5,
+    nights: 4,
+    destination: '成都',
+    budget: 2500,
+    people: 2,
+    description: '成都5天吃遍大街小巷，火锅、串串、担担面，让你吃到爽！',
+    pois: ['宽窄巷子', '锦里', '熊猫基地'],
+    poiDetails: [
+      {
+        name: '宽窄巷子',
+        type: 'scenic',
+        duration: '2小时',
+        price: 0,
+        description: '成都最具代表性的历史文化街区，美食与文化的完美结合。',
+        image: 'https://picsum.photos/seed/tuji128/800/600',
+      },
+      {
+        name: '成都大熊猫繁育研究基地',
+        type: 'scenic',
+        duration: '3小时',
+        price: 55,
+        description: '近距离观看可爱的大熊猫，亲子游必去。',
+        image: 'https://picsum.photos/seed/tuji129/800/600',
+      },
+    ],
+  },
 ];

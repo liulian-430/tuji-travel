@@ -3,43 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Clock, Heart, ChevronRight } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
 import Logo from '../components/ui/Logo';
-import { hotCities, mockPOIs, mockTrips } from '../data/mock';
-
-const userGuides = [
-  {
-    id: '1',
-    title: '北京4天3晚深度游攻略',
-    author: '旅行达人小王',
-    avatar: '王',
-    image: 'https://picsum.photos/seed/tuji116/800/600',
-    likes: 1256,
-    views: 8934,
-    pois: ['故宫博物院', '八达岭长城', '天坛公园'],
-    days: 4,
-  },
-  {
-    id: '2',
-    title: '上海迪士尼亲子游全攻略',
-    author: '妈妈爱旅行',
-    avatar: '妈',
-    image: 'https://picsum.photos/seed/tuji117/800/600',
-    likes: 892,
-    views: 5621,
-    pois: ['迪士尼乐园', '外滩', '南京路'],
-    days: 3,
-  },
-  {
-    id: '3',
-    title: '成都美食探店之旅',
-    author: '吃货小李',
-    avatar: '李',
-    image: 'https://picsum.photos/seed/tuji118/800/600',
-    likes: 2341,
-    views: 12567,
-    pois: ['宽窄巷子', '锦里', '熊猫基地'],
-    days: 5,
-  },
-];
+import { hotCities, mockPOIs, mockTrips, userGuides } from '../data/mock';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -75,7 +39,7 @@ export default function Home() {
               className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-400/60 text-base"
             />
             <button 
-              onClick={() => navigate('/map')}
+              onClick={() => navigate('/search')}
               className="px-4 py-2 bg-gradient-primary rounded-xl text-white text-sm font-medium shadow-lg shadow-primary-mid/30"
             >
               搜索
