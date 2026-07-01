@@ -2,21 +2,19 @@ import { useState } from 'react';
 import { MapPin, Calendar, ChevronRight, Camera, Heart, Star } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
 import TripCard from '../components/trip/TripCard';
-import { mockTrips, Trip } from '../data/mock';
+import { useTripStore } from '@/store/useTripStore';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
   const navigate = useNavigate();
+  const { trips, favoritePOIs, visitedCities, completeTrip } = useTripStore();
   const [activeTab, setActiveTab] = useState<'current' | 'history'>('current');
-  const [trips, setTrips] = useState(mockTrips);
 
   const currentTrips = trips.filter(t => t.status !== 'completed');
   const historicalTrips = trips.filter(t => t.status === 'completed');
 
   const handleCompleteTrip = (tripId: string) => {
-    setTrips(prev => prev.map(t => 
-      t.id === tripId ? { ...t, status: 'completed' as const } : t
-    ));
+    completeTrip(tripId);
     setActiveTab('history');
   };
 
@@ -39,8 +37,8 @@ export default function Profile() {
               <p className="text-sm text-gray-500 mt-1">世界那么大，一起去看看</p>
               <div className="flex gap-4 mt-2 text-sm text-gray-500">
                 <span><strong className="text-gray-700">{trips.length}</strong> 行程</span>
-                <span><strong className="text-gray-700">28</strong> 收藏</span>
-                <span><strong className="text-gray-700">156</strong> 足迹</span>
+                <span><strong className="text-gray-700">{favoritePOIs.length}</strong> 收藏</span>
+                <span><strong className="text-gray-700">{visitedCities.length}</strong> 足迹</span>
               </div>
             </div>
             <ChevronRight size={20} className="text-gray-400" />
@@ -118,17 +116,17 @@ export default function Profile() {
           <GlassCard className="p-4 text-center cursor-pointer hover:bg-white/20 transition-colors">
             <MapPin size={24} className="mx-auto mb-2 text-blue-500" />
             <p className="text-xs text-gray-500">足迹</p>
-            <p className="text-sm font-medium text-gray-700 mt-1">12个目的地</p>
+            <p className="text-sm font-medium text-gray-700 mt-1">{visitedCities.length}个目的地</p>
           </GlassCard>
           <GlassCard className="p-4 text-center cursor-pointer hover:bg-white/20 transition-colors">
             <Heart size={24} className="mx-auto mb-2 text-favorite" />
             <p className="text-xs text-gray-500">收藏</p>
-            <p className="text-sm font-medium text-gray-700 mt-1">28个收藏</p>
+            <p className="text-sm font-medium text-gray-700 mt-1">{favoritePOIs.length}个收藏</p>
           </GlassCard>
           <GlassCard className="p-4 text-center cursor-pointer hover:bg-white/20 transition-colors">
             <Star size={24} className="mx-auto mb-2 text-yellow-500" />
             <p className="text-xs text-gray-500">评价</p>
-            <p className="text-sm font-medium text-gray-700 mt-1">15条评价</p>
+            <p className="text-sm font-medium text-gray-700 mt-1">0条评价</p>
           </GlassCard>
         </div>
 

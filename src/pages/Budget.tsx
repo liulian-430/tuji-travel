@@ -1,41 +1,79 @@
-import { useParams } from 'react-router-dom';
-import { ChevronLeft, Plus, AlertTriangle } from 'lucide-react';
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronLeft, Plus, AlertTriangle, X } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
-import { mockBudgets, mockExpenses } from '../data/mock';
+import { useTripStore, type Expense } from '@/store/useTripStore';
 
 export default function Budget() {
   const { tripId } = useParams();
-  const budget = mockBudgets.find((b) => b.tripId === tripId) || mockBudgets[0];
-  const expenses = mockExpenses.filter((e) => e.tripId === tripId);
+  const navigate = useNavigate();
+  const { trips, expenses, addExpense, removeExpense, budgets, updateBudget } = useTripStore();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newExpense, setNewExpense] = useState({
+    category: 'food' as Expense['category'],
+    amount: '',
+    note: '',
+    date: new Date().toISOString().split('T')[0],
+  });
 
-  const totalSpent = expenses.reduce((acc, e) => acc + e.amount, 0);
-  const remaining = budget.totalBudget - totalSpent;
-  const percentUsed = (totalSpent / budget.totalBudget) * 100;
-
-  const categoryMap = {
-    transportation: { label: '交通', color: 'bg-blue-500' },
-    accommodation: { label: '住宿', color: 'bg-purple-500' },
-    food: { label: '餐饮', color: 'bg-red-500' },
-    ticket: { label: '门票', color: 'bg-green-500' },
-    shopping: { label: '购物', color: 'bg-pink-500' },
-    other: { label: '其他', color: 'bg-gray-500' },
+  const trip = trips.find((t) => t.id === tripId) || trips[0];
+  const tripExpenses = expenses.filter((e) => e.tripId === tripId);
+  const budget = budgets.find((b) => b.tripId === tripId) || {
+    tripId: tripId || '1',
+    totalBudget: trip?.budget || 3000,
+    transportation: 1000,
+    accommodation: 1500,
+    food: 1000,
+    ticket: 500,
+    shopping: 500,
+    other: 500,
   };
 
-  const categoryBudgets = [
-    { key: 'transportation', ...budget, spent: expenses.filter(e => e.category === 'transportation').reduce((a, e) => a + e.amount, 0) },
-    { key: 'accommodation', ...budget, spent: expenses.filter(e => e.category === 'accommodation').reduce((a, e) => a + e.amount, 0) },
-    { key: 'food', ...budget, spent: expenses.filter(e => e.category === 'food').reduce((a, e) => a + e.amount, 0) },
-    { key: 'ticket', ...budget, spent: expenses.filter(e => e.category === 'ticket').reduce((a, e) => a + e.amount, 0) },
-    { key: 'shopping', ...budget, spent: expenses.filter(e => e.category === 'shopping').reduce((a, e) => a + e.amount, 0) },
-    { key: 'other', ...budget, spent: expenses.filter(e => e.category === 'other').reduce((a, e) => a + e.amount, 0) },
-  ];
+  const totalSpent = tripExpenses.reduce((acc, e) => acc + e.amount, 0);
+  const remaining = budget.totalBudget - totalSpent;
+  const percentUsed = budget.totalBudget > 0 ? (totalSpent / budget.totalBudget) * 100 : 0;
+
+  const categoryMap = {
+    transportation: { label: '交通', color: 'bg-blue-500', textColor: 'text-blue-500' },
+    accommodation: { label: '住宿', color: 'bg-purple-500', textColor: 'text-purple-500' },
+    food: { label: '餐饮', color: 'bg-red-500', textColor: 'text-red-500' },
+    ticket: { label: '门票', color: 'bg-green-500', textColor: 'text-green-500' },
+    shopping: { label: '购物', color: 'bg-pink-500', textColor: 'text-pink-500' },
+    other: { label: '其他', color: 'bg-gray-500', textColor: 'text-gray-500' },
+  };
+
+  const categoryBudgets = (['transportation', 'accommodation', 'food', 'ticket', 'shopping', 'other'] as const).map((key) => ({
+    key,
+    budget: budget[key],
+    spent: tripExpenses.filter(e => e.category === key).reduce((a, e) => a + e.amount, 0),
+  }));
+
+  const handleAddExpense = () => {
+    if (!newExpense.amount || !tripId) return;
+    const expense: Expense = {
+      id: `exp-${Date.now()}`,
+      tripId,
+      category: newExpense.category,
+      amount: Number(newExpense.amount),
+      date: newExpense.date,
+      note: newExpense.note || categoryMap[newExpense.category].label,
+    };
+    addExpense(expense);
+    setShowAddModal(false);
+    setNewExpense({
+      category: 'food',
+      amount: '',
+      note: '',
+      date: new Date().toISOString().split('T')[0],
+    });
+  };
 
   return (
     <div className="min-h-screen pb-24 md:pb-8 pt-20 md:pt-24 px-4 md:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-4 mb-6">
           <button
-            onClick={() => history.back()}
+            onClick={() => navigate(-1)}
             className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors"
           >
             <ChevronLeft size={20} className="text-gray-700" />
@@ -109,24 +147,23 @@ export default function Budget() {
           <h2 className="font-bold text-gray-800 mb-4">分类预算</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {categoryBudgets.map((cat) => {
-              const catBudget = budget[cat.key as keyof typeof budget] as number;
-              const percent = (cat.spent / catBudget) * 100 || 0;
+              const percent = cat.budget > 0 ? (cat.spent / cat.budget) * 100 : 0;
               return (
                 <GlassCard key={cat.key} className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${categoryMap[cat.key as keyof typeof categoryMap].color}`} />
+                      <div className={`w-3 h-3 rounded-full ${categoryMap[cat.key].color}`} />
                       <span className="font-medium text-gray-700">
-                        {categoryMap[cat.key as keyof typeof categoryMap].label}
+                        {categoryMap[cat.key].label}
                       </span>
                     </div>
                     <span className="text-sm text-gray-500">
-                      ¥{cat.spent} / ¥{catBudget}
+                      ¥{cat.spent} / ¥{cat.budget}
                     </span>
                   </div>
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${categoryMap[cat.key as keyof typeof categoryMap].color}`}
+                      className={`h-full rounded-full transition-all duration-500 ${categoryMap[cat.key].color}`}
                       style={{ width: `${Math.min(percent, 100)}%` }}
                     />
                   </div>
@@ -140,34 +177,135 @@ export default function Budget() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-gray-800">消费记录</h2>
-            <button className="gradient-button text-sm px-4 py-2 flex items-center gap-1">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="gradient-button text-sm px-4 py-2 flex items-center gap-1"
+            >
               <Plus size={16} />
-              添加
+              记一笔
             </button>
           </div>
 
           <div className="space-y-3">
-            {expenses.map((expense) => (
-              <GlassCard key={expense.id} className="p-4 flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                  categoryMap[expense.category].color.replace('bg-', 'bg-') + '/10'
-                }`}>
-                  <span className={`text-sm font-bold ${categoryMap[expense.category].color.replace('bg-', 'text-')}`}>
-                    {categoryMap[expense.category].label[0]}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-800">{expense.note}</p>
-                  <p className="text-xs text-gray-500">{expense.date}</p>
-                </div>
-                <span className="font-bold text-gray-800">
-                  -¥{expense.amount}
-                </span>
+            {tripExpenses.length > 0 ? (
+              tripExpenses.map((expense) => (
+                <GlassCard key={expense.id} className="p-4 flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${categoryMap[expense.category].color}/10`}>
+                    <span className={`text-sm font-bold ${categoryMap[expense.category].textColor}`}>
+                      {categoryMap[expense.category].label[0]}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-800">{expense.note}</p>
+                    <p className="text-xs text-gray-500">{expense.date}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-gray-800">
+                      -¥{expense.amount}
+                    </span>
+                    <button
+                      onClick={() => removeExpense(expense.id)}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </GlassCard>
+              ))
+            ) : (
+              <GlassCard className="p-8 text-center">
+                <p className="text-gray-500 mb-2">暂无消费记录</p>
+                <p className="text-sm text-gray-400">点击右上角"记一笔"开始记录</p>
               </GlassCard>
-            ))}
+            )}
           </div>
         </div>
       </div>
+
+      {/* Add Expense Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl animate-bounce-in">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-800">记一笔</h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+              >
+                <X size={18} className="text-gray-500" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              {/* Category selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">消费类别</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(Object.keys(categoryMap) as Expense['category'][]).map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setNewExpense((prev) => ({ ...prev, category: cat }))}
+                      className={`p-3 rounded-xl text-sm font-medium transition-all ${
+                        newExpense.category === cat
+                          ? `${categoryMap[cat].color} text-white shadow-lg`
+                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      {categoryMap[cat].label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Amount */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">金额</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-gray-400">¥</span>
+                  <input
+                    type="number"
+                    value={newExpense.amount}
+                    onChange={(e) => setNewExpense((prev) => ({ ...prev, amount: e.target.value }))}
+                    placeholder="0.00"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary-mid focus:ring-2 focus:ring-primary-mid/20 outline-none text-2xl font-bold text-gray-800 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">日期</label>
+                <input
+                  type="date"
+                  value={newExpense.date}
+                  onChange={(e) => setNewExpense((prev) => ({ ...prev, date: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary-mid focus:ring-2 focus:ring-primary-mid/20 outline-none transition-all"
+                />
+              </div>
+
+              {/* Note */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">备注</label>
+                <input
+                  type="text"
+                  value={newExpense.note}
+                  onChange={(e) => setNewExpense((prev) => ({ ...prev, note: e.target.value }))}
+                  placeholder="添加备注（可选）"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary-mid focus:ring-2 focus:ring-primary-mid/20 outline-none transition-all"
+                />
+              </div>
+
+              {/* Submit button */}
+              <button
+                onClick={handleAddExpense}
+                disabled={!newExpense.amount}
+                className="w-full py-3 rounded-xl bg-gradient-primary text-white font-medium disabled:opacity-50 transition-all shadow-lg shadow-primary-mid/30 hover:shadow-xl hover:shadow-primary-mid/40"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
