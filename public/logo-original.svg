@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- 深色圆角背景 -->
-  <rect x="20" y="4" width="472" height="504" rx="140" fill="#171826"/>
+  <rect x="4" y="4" width="504" height="504" rx="148" fill="#14141f"/>
   
-  <!-- 左下圆点（实心白色） -->
-  <circle cx="148" cy="388" r="44" fill="white"/>
+  <!-- 左下圆点 -->
+  <circle cx="148" cy="392" r="42" fill="white"/>
   
-  <!-- 右上圆点（实心白色，稍大） -->
-  <circle cx="360" cy="144" r="52" fill="white"/>
+  <!-- 右上圆点 -->
+  <circle cx="368" cy="152" r="52" fill="white"/>
   
-  <!-- 曲线连接 -->
-  <path d="M148 388 C160 310 240 260 320 240 C380 225 360 180 360 144" 
+  <!-- S型曲线 -->
+  <path d="M148 392 C155 310 260 268 340 238 C390 218 380 185 368 152" 
         stroke="white" 
-        stroke-width="56" 
+        stroke-width="54" 
         stroke-linecap="round" 
         fill="none"/>
 </svg>
