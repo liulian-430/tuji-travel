@@ -23,6 +23,7 @@ export default function BottomNav() {
   };
 
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     pressStartY.current = e.touches[0].clientY;
     longPressTimer.current = setTimeout(() => {
       setIsRecording(true);
@@ -32,7 +33,6 @@ export default function BottomNav() {
   const handleTouchMove = useCallback((e: React.TouchEvent<HTMLButtonElement>) => {
     if (e.touches.length > 0) {
       const currentY = e.touches[0].clientY;
-      // If swiped up more than 50px, cancel recording
       if (pressStartY.current - currentY > 50) {
         if (longPressTimer.current) {
           clearTimeout(longPressTimer.current);
@@ -44,6 +44,23 @@ export default function BottomNav() {
   }, []);
 
   const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    if (isRecording) {
+      setIsRecording(false);
+      navigate('/ai-planner?voice=true');
+    }
+  }, [isRecording, navigate]);
+
+  const handleMouseDown = useCallback(() => {
+    longPressTimer.current = setTimeout(() => {
+      setIsRecording(true);
+    }, 500);
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
@@ -95,6 +112,9 @@ export default function BottomNav() {
             <div className="relative -mt-10">
               <button
                 onClick={handleClick}
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
@@ -107,22 +127,22 @@ export default function BottomNav() {
                     ? '0 0 20px rgba(236, 72, 153, 0.6), 0 0 40px rgba(236, 72, 153, 0.4)'
                     : '0 10px 40px rgba(139, 92, 246, 0.5)',
                   transform: isRecording ? 'scale(1.15)' : 'scale(1)',
-                  animation: isRecording ? 'pulseGlow 1s ease-in-out infinite' : 'none',
                 }}
               >
-                <span className={`transition-transform duration-300 ${isRecording ? 'opacity-0 scale-0' : 'opacity-100 scale-100'}`}>
-                  ＋
-                </span>
-                {isRecording && (
-                  <span className="absolute text-white text-lg animate-pulse">🎙</span>
+                {isRecording ? (
+                  <svg className="w-8 h-8 animate-pulse" viewBox="0 0 24 24" fill="white">
+                    <rect x="4" y="4" width="16" height="16" rx="4" />
+                  </svg>
+                ) : (
+                  <span>＋</span>
                 )}
               </button>
 
               {/* Recording wave animation */}
               {isRecording && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 pointer-events-none">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-6 pointer-events-none">
                   {/* Large expanding rings */}
-                  <div className="relative w-32 h-32 -translate-x-1/2">
+                  <div className="relative w-40 h-40 -translate-x-1/2">
                     <div 
                       className="absolute inset-0 rounded-full border-4 border-pink-400/50"
                       style={{
@@ -141,67 +161,44 @@ export default function BottomNav() {
                         animation: 'waveExpand 2s ease-out infinite 1s',
                       }}
                     />
-                    <div 
-                      className="absolute inset-12 rounded-full bg-gradient-to-r from-pink-500/30 to-purple-500/30"
-                      style={{
-                        animation: 'waveExpand 2s ease-out infinite 1.5s',
-                      }}
-                    />
                   </div>
                   
                   {/* Animated upward waves */}
-                  <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-24 h-24 overflow-hidden">
+                  <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-32 h-20 overflow-hidden">
                     <svg 
                       className="w-full h-full"
-                      viewBox="0 0 64 64"
+                      viewBox="0 0 64 40"
                     >
                       <defs>
-                        <linearGradient id="waveGradBottom" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <linearGradient id="waveGrad" x1="0%" y1="100%" x2="0%" y2="0%">
                           <stop offset="0%" stopColor="#ec4899" />
                           <stop offset="50%" stopColor="#8b5cf6" />
                           <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
                         </linearGradient>
                       </defs>
-                      {/* Multiple wave layers */}
                       <path
-                        d="M-8 48 Q8 32 24 48 Q40 64 56 48 Q72 32 88 48"
+                        d="M-8 32 Q8 16 24 32 Q40 48 56 32 Q72 16 88 32"
                         fill="none"
-                        stroke="url(#waveGradBottom)"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                        opacity="0.8"
-                        style={{
-                          animation: 'waveRise 1.5s ease-in-out infinite',
-                        }}
-                      />
-                      <path
-                        d="M-8 56 Q8 40 24 56 Q40 72 56 56 Q72 40 88 56"
-                        fill="none"
-                        stroke="url(#waveGradBottom)"
+                        stroke="url(#waveGrad)"
                         strokeWidth="3"
                         strokeLinecap="round"
-                        opacity="0.5"
-                        style={{
-                          animation: 'waveRise 1.5s ease-in-out infinite 0.3s',
-                        }}
+                        style={{ animation: 'waveRise 1.5s ease-in-out infinite' }}
                       />
                       <path
-                        d="M-8 64 Q8 48 24 64 Q40 80 56 64 Q72 48 88 64"
+                        d="M-8 40 Q8 24 24 40 Q40 56 56 40 Q72 24 88 40"
                         fill="none"
-                        stroke="url(#waveGradBottom)"
+                        stroke="url(#waveGrad)"
                         strokeWidth="2"
                         strokeLinecap="round"
-                        opacity="0.3"
-                        style={{
-                          animation: 'waveRise 1.5s ease-in-out infinite 0.6s',
-                        }}
+                        opacity="0.6"
+                        style={{ animation: 'waveRise 1.5s ease-in-out infinite 0.3s' }}
                       />
                     </svg>
                   </div>
                   
                   {/* Recording text */}
-                  <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                    <span className="text-xs text-gray-600/90 bg-white/80 backdrop-blur-xl px-4 py-2 rounded-full shadow-lg font-medium">
+                  <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                    <span className="text-xs text-gray-600/90 bg-white/90 backdrop-blur-xl px-4 py-2 rounded-full shadow-lg font-medium">
                       松手进入AI规划 · 上划取消
                     </span>
                   </div>
@@ -226,43 +223,54 @@ export default function BottomNav() {
         </div>
       </nav>
 
-      {/* New Trip Modal */}
+      {/* New Trip Modal - Centered floating card */}
       {showTripModal && (
         <div 
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/20 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-md p-6"
           onClick={() => setShowTripModal(false)}
         >
           <div 
-            className="w-full max-w-md bg-white/70 backdrop-blur-3xl rounded-t-3xl p-6 pb-10 space-y-4"
+            className="w-full max-w-sm bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
             style={{
-              animation: 'slideUp 0.3s ease-out',
+              animation: 'modalPopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}
           >
-            <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-800 text-center">新建行程</h3>
-            <input
-              type="text"
-              value={tripName}
-              onChange={(e) => setTripName(e.target.value)}
-              placeholder="输入行程名称"
-              className="w-full bg-white/50 backdrop-blur-sm border border-white/40 rounded-2xl px-5 py-4 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-mid/30 text-center text-lg"
-              autoFocus
-            />
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={() => setShowTripModal(false)}
-                className="flex-1 py-4 rounded-2xl bg-gray-100/80 backdrop-blur-sm text-gray-600 font-medium hover:bg-gray-200/80 transition-colors"
-              >
-                返回
-              </button>
-              <button
-                onClick={handleCreateTrip}
-                disabled={!tripName.trim()}
-                className="flex-1 py-4 rounded-2xl bg-gradient-primary text-white font-medium shadow-lg shadow-primary-mid/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:shadow-xl hover:shadow-primary-mid/40"
-              >
-                创建
-              </button>
+            {/* Header with gradient */}
+            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-6 py-5">
+              <h3 className="text-xl font-bold text-white text-center">新建行程</h3>
+              <p className="text-white/80 text-sm text-center mt-1">开始规划你的下一次旅行</p>
+            </div>
+            
+            {/* Form content */}
+            <div className="p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">行程名称</label>
+                <input
+                  type="text"
+                  value={tripName}
+                  onChange={(e) => setTripName(e.target.value)}
+                  placeholder="例如：北京三日游"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-mid/30 focus:border-primary-mid/30 text-base transition-all"
+                  autoFocus
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowTripModal(false)}
+                  className="flex-1 py-4 rounded-2xl bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleCreateTrip}
+                  disabled={!tripName.trim()}
+                  className="flex-1 py-4 rounded-2xl bg-gradient-primary text-white font-semibold shadow-lg shadow-primary-mid/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:shadow-xl hover:shadow-primary-mid/40"
+                >
+                  创建
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -285,24 +293,18 @@ export default function BottomNav() {
             opacity: 1;
           }
           100% {
-            transform: translateY(-20px);
+            transform: translateY(-16px);
             opacity: 0;
           }
         }
-        @keyframes pulseGlow {
-          0%, 100% {
-            box-shadow: 0 0 0 0px rgba(236, 72, 153, 0.4), 0 0 20px rgba(236, 72, 153, 0.3);
+        @keyframes modalPopIn {
+          0% {
+            opacity: 0;
+            transform: scale(0.8) translateY(20px);
           }
-          50% {
-            box-shadow: 0 0 0 8px rgba(236, 72, 153, 0), 0 0 40px rgba(236, 72, 153, 0.5);
-          }
-        }
-        @keyframes slideUp {
-          from {
-            transform: translateY(100%);
-          }
-          to {
-            transform: translateY(0);
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
           }
         }
       `}</style>
