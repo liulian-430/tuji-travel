@@ -95,6 +95,7 @@ interface TripState {
   addPOIToTrip: (tripId: string, poi: TripPOI, day?: number) => void;
   removePOIFromTrip: (tripId: string, poiId: string) => void;
   movePOIToDay: (tripId: string, poiId: string, targetDay: number) => void;
+  reorderPoisInDay: (tripId: string, day: number, fromIndex: number, toIndex: number) => void;
   addDayToTrip: (tripId: string) => void;
   removeDayFromTrip: (tripId: string, day: number) => void;
   completeTrip: (tripId: string) => void;
@@ -218,6 +219,22 @@ export const useTripStore = create<TripState>()(
             daysList: newDaysList,
             days: computeDays(newDaysList, t.days),
           };
+        }),
+      })),
+      reorderPoisInDay: (tripId, day, fromIndex, toIndex) => set((state) => ({
+        trips: state.trips.map((t) => {
+          if (t.id !== tripId) return t;
+          const newDaysList = (t.daysList || []).map((d) => {
+            if (d.day !== day) return d;
+            const allPois = [...(d.morning || []), ...(d.afternoon || []), ...(d.evening || [])];
+            if (fromIndex < 0 || fromIndex >= allPois.length || toIndex < 0 || toIndex >= allPois.length) {
+              return d;
+            }
+            const [moved] = allPois.splice(fromIndex, 1);
+            allPois.splice(toIndex, 0, moved);
+            return { ...d, afternoon: allPois, morning: [], evening: [] };
+          });
+          return { ...t, daysList: newDaysList };
         }),
       })),
       addDayToTrip: (tripId) => set((state) => ({

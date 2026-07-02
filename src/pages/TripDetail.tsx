@@ -5,7 +5,7 @@ import GlassCard from '../components/ui/GlassCard';
 import EmptyState from '../components/ui/EmptyState';
 import WeatherWidget from '../components/ui/WeatherWidget';
 import { useTripStore } from '@/store/useTripStore';
-import type { DayScheduleSimple } from '@/store/useTripStore';
+import type { DayScheduleSimple } from '@/data/mock';
 import type { TripPOI } from '../data/mock';
 import { DEFAULT_BUDGET } from '@/config/constants';
 import { useToastStore } from '@/store/useToastStore';
