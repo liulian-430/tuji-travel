@@ -812,55 +812,9 @@ export default function Map() {
 
               return (
                 <div key={poi.id} className="relative">
-                  {showTransport && transportInfo && (
-                    <div
-                      className={`mx-4 my-2 transition-all cursor-pointer ${
-                        isTransportExpanded ? '' : 'hover:bg-white/30'
-                      }`}
-                      onClick={() => setSelectedTransportIndex(isTransportExpanded ? null : index)}
-                    >
-                      <div className="flex items-center gap-3 py-2 px-3 rounded-xl bg-white/50 backdrop-blur-sm border border-white/60">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-mid/10">
-                          <Bus size={16} className="text-primary-mid" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-700">
-                              {formatDistance(transportInfo.distance)}
-                            </span>
-                            <span className="text-xs text-gray-400">·</span>
-                            <span className="text-sm text-gray-600">
-                              公交约{formatDuration(transportInfo.transitDuration)}
-                            </span>
-                          </div>
-                        </div>
-                        <ArrowDown size={14} className={`text-gray-400 transition-transform ${isTransportExpanded ? 'rotate-180' : ''}`} />
-                      </div>
-                      {isTransportExpanded && (
-                        <div className="mt-2 grid grid-cols-3 gap-2">
-                          <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-center">
-                            <Bus size={18} className="mx-auto mb-1 text-green-600" />
-                            <p className="text-xs font-medium text-green-700">公交</p>
-                            <p className="text-xs text-green-600">{formatDuration(transportInfo.transitDuration)}</p>
-                          </div>
-                          <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-center">
-                            <TrainFront size={18} className="mx-auto mb-1 text-blue-600" />
-                            <p className="text-xs font-medium text-blue-700">地铁</p>
-                            <p className="text-xs text-blue-600">{formatDuration(Math.ceil(transportInfo.transitDuration * 0.8))}</p>
-                          </div>
-                          <div className="p-3 rounded-xl bg-orange-50 border border-orange-200 text-center">
-                            <Car size={18} className="mx-auto mb-1 text-orange-600" />
-                            <p className="text-xs font-medium text-orange-700">打车</p>
-                            <p className="text-xs text-orange-600">¥{transportInfo.taxiCost}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                   <div
-                    className={`transition-all ${
-                      isDragging ? 'opacity-50 scale-105 z-10' : ''
+                    className={`transition-all duration-300 ease-out ${
+                      isDragging ? 'opacity-50 scale-105 z-20 rotate-1 shadow-xl' : ''
                     } ${isDragOver && draggingIndex && draggingIndex < index ? 'mt-16' : ''}`}
                     onMouseDown={(e) => handleDragStart(e, index)}
                     onMouseMove={handleDragMove}
@@ -873,7 +827,7 @@ export default function Map() {
                   >
                     <SwipeableCard key={poi.id} onDelete={() => handleDeletePoi(poi.id)}>
                       <GlassCard
-                        className={`overflow-hidden cursor-pointer transition-all ${
+                        className={`overflow-hidden cursor-pointer transition-all duration-200 ${
                           isSelected ? 'ring-2 ring-primary-mid' : ''
                         } ${isUnscheduled ? 'border-l-4 border-l-amber-400' : ''} ${
                           viewMode !== 'all' ? 'active:scale-[0.98]' : ''
@@ -883,11 +837,11 @@ export default function Map() {
                         <div className="flex items-start gap-3 p-4">
                           {viewMode !== 'all' && (
                             <div className="flex flex-col items-center justify-center pt-1">
-                              <GripVertical size={18} className="text-gray-300 cursor-grab active:cursor-grabbing" />
+                              <GripVertical size={18} className="text-gray-300 cursor-grab active:cursor-grabbing transition-colors hover:text-gray-400" />
                             </div>
                           )}
                           <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md flex-shrink-0 bg-gradient-to-br ${
+                            className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md flex-shrink-0 bg-gradient-to-br transition-transform duration-200 ${
                               isUnscheduled
                                 ? 'from-amber-400 to-orange-500'
                                 : dayButtonColors[dayColorIndex]
@@ -899,7 +853,7 @@ export default function Map() {
                           <img
                             src={poi.image}
                             alt={poi.name}
-                            className={`w-20 h-20 rounded-lg object-cover flex-shrink-0 ${isUnscheduled ? 'opacity-80' : ''}`}
+                            className={`w-20 h-20 rounded-lg object-cover flex-shrink-0 transition-opacity ${isUnscheduled ? 'opacity-80' : ''}`}
                           />
 
                           <div className="flex-1 min-w-0">
@@ -938,6 +892,52 @@ export default function Map() {
                       </GlassCard>
                     </SwipeableCard>
                   </div>
+
+                  {showTransport && transportInfo && (
+                    <div
+                      className={`mx-4 my-2 transition-all duration-300 ease-out cursor-pointer ${
+                        isTransportExpanded ? '' : 'hover:bg-white/30'
+                      }`}
+                      onClick={() => setSelectedTransportIndex(isTransportExpanded ? null : index)}
+                    >
+                      <div className="flex items-center gap-3 py-2 px-3 rounded-xl bg-white/50 backdrop-blur-sm border border-white/60">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-mid/10">
+                          <Bus size={16} className="text-primary-mid" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-700">
+                              {formatDistance(transportInfo.distance)}
+                            </span>
+                            <span className="text-xs text-gray-400">·</span>
+                            <span className="text-sm text-gray-600">
+                              公交约{formatDuration(transportInfo.transitDuration)}
+                            </span>
+                          </div>
+                        </div>
+                        <ArrowDown size={14} className={`text-gray-400 transition-transform duration-200 ${isTransportExpanded ? 'rotate-180' : ''}`} />
+                      </div>
+                      {isTransportExpanded && (
+                        <div className="mt-2 grid grid-cols-3 gap-2 animate-slide-down">
+                          <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-center">
+                            <Bus size={18} className="mx-auto mb-1 text-green-600" />
+                            <p className="text-xs font-medium text-green-700">公交</p>
+                            <p className="text-xs text-green-600">{formatDuration(transportInfo.transitDuration)}</p>
+                          </div>
+                          <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-center">
+                            <TrainFront size={18} className="mx-auto mb-1 text-blue-600" />
+                            <p className="text-xs font-medium text-blue-700">地铁</p>
+                            <p className="text-xs text-blue-600">{formatDuration(Math.ceil(transportInfo.transitDuration * 0.8))}</p>
+                          </div>
+                          <div className="p-3 rounded-xl bg-orange-50 border border-orange-200 text-center">
+                            <Car size={18} className="mx-auto mb-1 text-orange-600" />
+                            <p className="text-xs font-medium text-orange-700">打车</p>
+                            <p className="text-xs text-orange-600">¥{transportInfo.taxiCost}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

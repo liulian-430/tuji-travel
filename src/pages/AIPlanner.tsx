@@ -50,7 +50,7 @@ export default function AIPlanner() {
   const [nights, setNights] = useState(2);
   const [people, setPeople] = useState(2);
   const [budget, setBudget] = useState(DEFAULT_BUDGET);
-  const [startDate, setStartDate] = useState('');
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
 
   const [isGenerated, setIsGenerated] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -78,7 +78,7 @@ export default function AIPlanner() {
           id: '1',
           tripId: 'new',
           dayIndex: 1,
-          date: startDate || '2026-07-15',
+          date: startDate,
           items: mockPOIs.slice(0, 2).map((poi, idx) => ({
             id: `1-${idx}`,
             poiId: poi.id,
@@ -92,7 +92,7 @@ export default function AIPlanner() {
           id: '2',
           tripId: 'new',
           dayIndex: 2,
-          date: startDate || '2026-07-16',
+          date: new Date(new Date(startDate).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           items: mockPOIs.slice(2, 4).map((poi, idx) => ({
             id: `2-${idx}`,
             poiId: poi.id,
@@ -138,7 +138,7 @@ export default function AIPlanner() {
         id: `${dayIdx + 1}`,
         tripId: 'new',
         dayIndex: dayIdx + 1,
-        date: startDate || `2026-07-${15 + dayIdx}`,
+        date: new Date(new Date(startDate).getTime() + dayIdx * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         items: selectedItems.slice(dayIdx * 2, (dayIdx + 1) * 2).map((poi, idx) => ({
           id: `${dayIdx + 1}-${idx}`,
           poiId: poi.id,
