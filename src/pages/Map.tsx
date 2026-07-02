@@ -93,28 +93,28 @@ const createPoiIcon = (type: string, selected: boolean, dayNum?: number | null) 
   });
 };
 
-// 国内可用的地图瓦片源
+// 可用的地图瓦片源
 const layerOptions = [
   {
     id: 'standard',
     name: '标准地图',
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; OpenStreetMap',
-    subdomains: ['a', 'b', 'c'],
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    attribution: '&copy; Esri',
+    subdomains: [] as string[],
   },
   {
     id: 'satellite',
     name: '卫星影像',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     attribution: '&copy; Esri',
-    subdomains: [],
+    subdomains: [] as string[],
   },
   {
     id: 'light',
     name: '简约浅色',
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; CartoDB',
-    subdomains: ['a', 'b', 'c', 'd'],
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    attribution: '&copy; Esri',
+    subdomains: [] as string[],
   },
 ];
 
