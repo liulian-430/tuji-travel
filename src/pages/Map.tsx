@@ -193,8 +193,9 @@ export default function Map() {
     const planningTrips = trips.filter((t) => t.status !== 'completed');
     if (planningTrips.length > 0 && !planningTrips.find((t) => t.id === selectedTripId)) {
       setSelectedTripId(planningTrips[0].id);
+      setCurrentTrip(planningTrips[0].id);
     }
-  }, [trips, selectedTripId]);
+  }, [trips, selectedTripId, setCurrentTrip]);
 
   // 只显示进行中的行程（过滤掉已完成的）
   const planningTrips = useMemo(() => {

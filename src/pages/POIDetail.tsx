@@ -16,7 +16,7 @@ export default function POIDetail() {
   const [currentImage, setCurrentImage] = useState(0);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const { favoritePOIs, toggleFavoritePOI, trips, addPOIToTrip } = useTripStore();
+  const { favoritePOIs, toggleFavoritePOI, trips, currentTripId, addPOIToTrip } = useTripStore();
   const { showToast } = useToastStore();
 
   const poi = mockPOIs.find((p) => p.id === id) || mockPOIs[0];
@@ -24,9 +24,12 @@ export default function POIDetail() {
   const isFavorited = favoritePOIs.includes(poi.id);
 
   const currentTrip = useMemo(() => {
+    if (currentTripId) {
+      return trips.find((t) => t.id === currentTripId);
+    }
     const planning = trips.filter((t) => t.status !== 'completed');
     return planning.length > 0 ? planning[0] : null;
-  }, [trips]);
+  }, [trips, currentTripId]);
 
   const typeMap: Record<string, { label: string; color: string }> = {
     scenic: { label: '景点', color: 'bg-green-500/20 text-green-600' },

@@ -109,6 +109,22 @@ export default function AIPlanner() {
   };
 
   const handleCustomGenerate = () => {
+    if (!destination.trim()) {
+      showToast('请输入目的地城市', 'error');
+      return;
+    }
+    if (days < 1 || days > 30) {
+      showToast('行程天数应在1-30天之间', 'error');
+      return;
+    }
+    if (people < 1 || people > 20) {
+      showToast('出行人数应在1-20人之间', 'error');
+      return;
+    }
+    if (budget < 1000 || budget > 50000) {
+      showToast('预算应在1000-50000元之间', 'error');
+      return;
+    }
     setIsGenerating(true);
     setTimeout(() => {
       const selectedItems = [

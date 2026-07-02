@@ -14,15 +14,18 @@ interface POICardProps {
 }
 
 export default function POICard({ poi, onClick, compact = false, showAddButton = false }: POICardProps) {
-  const { favoritePOIs, toggleFavoritePOI, trips, addPOIToTrip } = useTripStore();
+  const { favoritePOIs, toggleFavoritePOI, trips, currentTripId, addPOIToTrip } = useTripStore();
   const { showToast } = useToastStore();
-  const isFavorited = favoritePOIs.includes(poi.id) || favoritePOIs.includes(poi.name);
+  const isFavorited = favoritePOIs.includes(poi.id);
   const [showAddModal, setShowAddModal] = useState(false);
 
   const currentTrip = useMemo(() => {
+    if (currentTripId) {
+      return trips.find((t) => t.id === currentTripId);
+    }
     const planning = trips.filter((t) => t.status !== 'completed');
     return planning.length > 0 ? planning[0] : null;
-  }, [trips]);
+  }, [trips, currentTripId]);
 
   const typeMap = {
     scenic: { label: '景点', color: 'bg-green-500/20 text-green-600' },

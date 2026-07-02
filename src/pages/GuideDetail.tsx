@@ -12,7 +12,7 @@ import { useEscKey } from '@/hooks/useEscKey';
 export default function GuideDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { trips, addPOIToTrip, favoritePOIs, toggleFavoritePOI } = useTripStore();
+  const { trips, currentTripId, addPOIToTrip, favoritePOIs, toggleFavoritePOI } = useTripStore();
   const { showToast } = useToastStore();
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedPoi, setSelectedPoi] = useState('');
@@ -21,9 +21,12 @@ export default function GuideDetail() {
   const isAddAll = selectedPoi === '全部景点';
 
   const currentTrip = useMemo(() => {
+    if (currentTripId) {
+      return trips.find((t) => t.id === currentTripId);
+    }
     const planning = trips.filter((t) => t.status !== 'completed');
     return planning.length > 0 ? planning[0] : null;
-  }, [trips]);
+  }, [trips, currentTripId]);
 
   const typeColors = {
     scenic: 'bg-green-500/20 text-green-600 border-green-500/30',
@@ -87,12 +90,9 @@ export default function GuideDetail() {
   };
 
   const handleFavorite = () => {
-    const firstPoi = guide.poiDetails[0];
-    if (firstPoi) {
-      toggleFavoritePOI(firstPoi.name);
-      const isFav = favoritePOIs.includes(firstPoi.name);
-      showToast(isFav ? '已取消收藏' : '已收藏攻略', 'success');
-    }
+    toggleFavoritePOI(guide.id);
+    const isFav = favoritePOIs.includes(guide.id);
+    showToast(isFav ? '已取消收藏' : '已收藏攻略', 'success');
   };
 
   const handleShare = async () => {
@@ -240,8 +240,8 @@ export default function GuideDetail() {
 
       {/* Bottom Action Bar */}
       <div className="fixed bottom-24 left-0 right-0 glass-card mx-4 p-4 flex items-center gap-4 md:hidden z-30">
-        <button onClick={handleFavorite} className={`flex flex-col items-center gap-1 p-2 ${favoritePOIs.includes(guide.poiDetails[0]?.name) ? 'text-favorite' : 'text-gray-500'}`}>
-          <Heart size={22} fill={favoritePOIs.includes(guide.poiDetails[0]?.name) ? 'currentColor' : 'none'} />
+        <button onClick={handleFavorite} className={`flex flex-col items-center gap-1 p-2 ${favoritePOIs.includes(guide.id) ? 'text-favorite' : 'text-gray-500'}`}>
+          <Heart size={22} fill={favoritePOIs.includes(guide.id) ? 'currentColor' : 'none'} />
           <span className="text-xs">收藏</span>
         </button>
         <button onClick={handleShare} className="flex flex-col items-center gap-1 p-2 text-gray-500">

@@ -4,11 +4,13 @@ import { ChevronLeft, Plus, AlertTriangle, X, Receipt } from 'lucide-react';
 import GlassCard from '../components/ui/GlassCard';
 import { EmptyStateCompact } from '../components/ui/EmptyState';
 import { useTripStore, type Expense } from '@/store/useTripStore';
+import { useToastStore } from '@/store/useToastStore';
 
 export default function Budget() {
   const { tripId } = useParams();
   const navigate = useNavigate();
   const { trips, expenses, addExpense, removeExpense, budgets, updateBudget } = useTripStore();
+  const { showToast } = useToastStore();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newExpense, setNewExpense] = useState({
     category: 'food' as Expense['category'],
@@ -51,11 +53,20 @@ export default function Budget() {
 
   const handleAddExpense = () => {
     if (!newExpense.amount || !tripId) return;
+    const amount = Number(newExpense.amount);
+    if (amount <= 0) {
+      showToast('金额必须大于0', 'error');
+      return;
+    }
+    if (amount > 1000000) {
+      showToast('金额不能超过100万元', 'error');
+      return;
+    }
     const expense: Expense = {
       id: `exp-${Date.now()}`,
       tripId,
       category: newExpense.category,
-      amount: Number(newExpense.amount),
+      amount,
       date: newExpense.date,
       note: newExpense.note || categoryMap[newExpense.category].label,
     };

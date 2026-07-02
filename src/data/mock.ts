@@ -18,12 +18,16 @@ export interface Trip {
   name: string;
   destination: string;
   days: number;
-  nights: number;
-  people: number;
+  nights?: number;
+  people?: number;
   startDate: string;
   status: 'planning' | 'in_progress' | 'completed';
-  coverImage: string;
-  createdAt: string;
+  coverImage?: string;
+  createdAt?: string;
+  budget?: number;
+  spent?: number;
+  pois: TripPOI[];
+  daysList?: DayScheduleSimple[];
 }
 
 export interface DaySchedule {
@@ -237,6 +241,7 @@ export const mockTrips: Trip[] = [
     status: 'planning',
     coverImage: 'https://picsum.photos/seed/tuji109/800/600',
     createdAt: '2026-06-20',
+    pois: [],
   },
   {
     id: '2',
@@ -249,6 +254,7 @@ export const mockTrips: Trip[] = [
     status: 'planning',
     coverImage: 'https://picsum.photos/seed/tuji110/800/600',
     createdAt: '2026-06-25',
+    pois: [],
   },
 ];
 
