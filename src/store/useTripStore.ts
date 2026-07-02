@@ -112,7 +112,7 @@ interface TripState {
 }
 
 function computeDays(daysList?: DayScheduleSimple[], fallback?: number): number {
-  if (!daysList || daysList.length === 0) return fallback || 1;
+  if (!daysList || daysList.length === 0) return fallback ?? 1;
   return Math.max(...daysList.map((d) => d.day));
 }
 
@@ -223,8 +223,7 @@ export const useTripStore = create<TripState>()(
       addDayToTrip: (tripId) => set((state) => ({
         trips: state.trips.map((t) => {
           if (t.id !== tripId) return t;
-          const currentDays = computeDays(t.daysList, t.days);
-          const nextDay = currentDays + 1;
+          const nextDay = (t.days || 0) + 1;
           const newDaysList = t.daysList ? [...t.daysList] : [];
           if (!newDaysList.find((d) => d.day === nextDay)) {
             newDaysList.push({ day: nextDay });
