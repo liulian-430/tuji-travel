@@ -52,6 +52,56 @@ export default function DraggablePOIList({
   const draggingIndexRef = useRef<number | null>(null);
   const isDraggingRef = useRef(false);
   const startPosRef = useRef({ x: 0, y: 0 });
+  const scrollRafRef = useRef<number | null>(null);
+  const scrollDirectionRef = useRef<number>(0); // -1 上滑, 1 下滑, 0 停止
+
+  // 向上查找最近的可滚动祖先元素
+  const getScrollParent = (): HTMLElement | Window => {
+    let el: HTMLElement | null = containerRef.current?.parentElement || null;
+    while (el) {
+      const style = getComputedStyle(el);
+      if (
+        (style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+        el.scrollHeight > el.clientHeight
+      ) {
+        return el;
+      }
+      el = el.parentElement;
+    }
+    return window;
+  };
+
+  // 自动滚动循环
+  const startAutoScroll = (direction: number) => {
+    if (scrollDirectionRef.current === direction && scrollRafRef.current !== null) return;
+    scrollDirectionRef.current = direction;
+    if (scrollRafRef.current !== null) cancelAnimationFrame(scrollRafRef.current);
+
+    const scrollParent = getScrollParent();
+    const SPEED = 14;
+
+    const tick = () => {
+      if (scrollDirectionRef.current === 0) {
+        scrollRafRef.current = null;
+        return;
+      }
+      if (scrollParent === window) {
+        window.scrollBy(0, SPEED * scrollDirectionRef.current);
+      } else {
+        (scrollParent as HTMLElement).scrollBy(0, SPEED * scrollDirectionRef.current);
+      }
+      scrollRafRef.current = requestAnimationFrame(tick);
+    };
+    scrollRafRef.current = requestAnimationFrame(tick);
+  };
+
+  const stopAutoScroll = () => {
+    scrollDirectionRef.current = 0;
+    if (scrollRafRef.current !== null) {
+      cancelAnimationFrame(scrollRafRef.current);
+      scrollRafRef.current = null;
+    }
+  };
 
   const updateInsertIndex = (clientY: number) => {
     if (!containerRef.current) return;
@@ -137,6 +187,19 @@ export default function DraggablePOIList({
     e.preventDefault();
     setDragPosition({ x: e.clientX, y: e.clientY });
     updateInsertIndex(e.clientY);
+
+    // 拖到屏幕顶端/底端时自动滚动
+    const EDGE = 90;
+    const viewH = window.innerHeight;
+    if (e.clientY < EDGE) {
+      // 接近顶部，向上滚动
+      startAutoScroll(-1);
+    } else if (e.clientY > viewH - EDGE) {
+      // 接近底部，向下滚动
+      startAutoScroll(1);
+    } else {
+      stopAutoScroll();
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -152,6 +215,7 @@ export default function DraggablePOIList({
     isDraggingRef.current = false;
     document.body.style.userSelect = '';
     document.body.style.cursor = '';
+    stopAutoScroll();
 
     const fromIdx = draggingIndexRef.current;
     const toIdx = insertIndexRef.current;
@@ -185,6 +249,7 @@ export default function DraggablePOIList({
     isDraggingRef.current = false;
     document.body.style.userSelect = '';
     document.body.style.cursor = '';
+    stopAutoScroll();
 
     setDragPreviewOpacity(0);
 
@@ -202,6 +267,7 @@ export default function DraggablePOIList({
       if (longPressTimerRef.current) {
         clearTimeout(longPressTimerRef.current);
       }
+      stopAutoScroll();
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
@@ -417,7 +483,7 @@ export default function DraggablePOIList({
             left: dragPosition.x - dragOffset.x,
             top: dragPosition.y - dragOffset.y,
             width: cardRefs.current[draggingIndex]?.offsetWidth || 320,
-            transform: 'translate3d(0, 0, 0) rotate(2deg) scale(1.04)',
+            transform: 'translate3d(0, 0, 0) scale(1.06)',
             opacity: dragPreviewOpacity,
             transition: `opacity 0.2s ${SMOOTH_EASE}`,
             willChange: 'transform, opacity',
