@@ -98,23 +98,23 @@ const layerOptions = [
   {
     id: 'standard',
     name: '标准地图',
-    url: 'https://webrd{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
-    attribution: '&copy; 高德地图',
-    subdomains: ['01', '02', '03', '04'],
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap',
+    subdomains: ['a', 'b', 'c'],
   },
   {
     id: 'satellite',
     name: '卫星影像',
-    url: 'https://webst{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
-    attribution: '&copy; 高德地图',
-    subdomains: ['01', '02', '03', '04'],
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: '&copy; Esri',
+    subdomains: [],
   },
   {
     id: 'light',
     name: '简约浅色',
-    url: 'https://geo.datav.aliyun.com/geemap/v2/attribution/{z}/{x}/{y}.png',
-    attribution: '&copy; DataV.GeoAtlas',
-    subdomains: [],
+    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; CartoDB',
+    subdomains: ['a', 'b', 'c', 'd'],
   },
 ];
 
