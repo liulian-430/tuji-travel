@@ -332,63 +332,49 @@ export const useTripStore = create<TripState>()(
         if (state.undoStack.length === 0) return state;
         const lastAction = state.undoStack[state.undoStack.length - 1];
         const newStack = state.undoStack.slice(0, -1);
+        let result = state;
         
-        switch (lastAction.type) {
-          case 'removeTrip': {
-            const trip = lastAction.payload as Trip;
-            return {
-              trips: [...state.trips, trip].sort((a, b) => 
-                new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
-              ),
-              undoStack: newStack,
-            };
-          }
-          case 'removePOI': {
-            const { tripId, poi } = lastAction.payload as { tripId: string; poi: TripPOI };
-            return {
-              trips: state.trips.map((t) => {
-                if (t.id !== tripId) return t;
-                return {
-                  ...t,
-                  pois: [...t.pois, poi],
-                };
-              }),
-              undoStack: newStack,
-            };
-          }
-          case 'removeDay': {
-            const { tripId, day } = lastAction.payload as { tripId: string; day: DayScheduleSimple };
-            return {
-              trips: state.trips.map((t) => {
-                if (t.id !== tripId) return t;
-                const newDaysList = [...(t.daysList || []), day]
-                  .sort((a, b) => a.day - b.day);
-                return {
-                  ...t,
-                  days: newDaysList.length,
-                  daysList: newDaysList,
-                };
-              }),
-              undoStack: newStack,
-            };
-          }
-          case 'removeExpense': {
-            const expense = lastAction.payload as Expense;
-            const trip = state.trips.find((t) => t.id === expense.tripId);
-            const newSpent = (trip?.spent || 0) + expense.amount;
-            return {
-              expenses: [expense, ...state.expenses],
-              trips: state.trips.map((t) =>
-                t.id === expense.tripId ? { ...t, spent: newSpent } : t
-              ),
-              undoStack: newStack,
-            };
-          }
-          default:
-            return state;
+        if (lastAction.type === 'removeTrip') {
+          const trip = lastAction.payload as Trip;
+          result = {
+            trips: [...state.trips, trip].sort((a, b) => 
+              new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
+            ),
+            undoStack: newStack,
+          };
+        } else if (lastAction.type === 'removePOI') {
+          const { tripId, poi } = lastAction.payload as { tripId: string; poi: TripPOI };
+          result = {
+            trips: state.trips.map((t) => {
+              if (t.id !== tripId) return t;
+              return { ...t, pois: [...t.pois, poi] };
+            }),
+            undoStack: newStack,
+          };
+        } else if (lastAction.type === 'removeDay') {
+          const { tripId, day } = lastAction.payload as { tripId: string; day: DayScheduleSimple };
+          result = {
+            trips: state.trips.map((t) => {
+              if (t.id !== tripId) return t;
+              const newDaysList = [...(t.daysList || []), day].sort((a, b) => a.day - b.day);
+              return { ...t, days: newDaysList.length, daysList: newDaysList };
+            }),
+            undoStack: newStack,
+          };
+        } else if (lastAction.type === 'removeExpense') {
+          const expense = lastAction.payload as Expense;
+          const trip = state.trips.find((t) => t.id === expense.tripId);
+          const newSpent = (trip?.spent || 0) + expense.amount;
+          result = {
+            expenses: [expense, ...state.expenses],
+            trips: state.trips.map((t) => t.id === expense.tripId ? { ...t, spent: newSpent } : t),
+            undoStack: newStack,
+          };
         }
-      }),
-    }),
+        
+        return result;
+      });
+    });
     {
       name: 'tuji-trip-storage',
     }
