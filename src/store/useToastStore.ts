@@ -15,7 +15,7 @@ interface ToastState {
   removeToast: (id: string) => void;
 }
 
-export const useToastStore = create<ToastState>()(
+const toastStore = create<ToastState>()(
   persist(
     (set) => ({
       toasts: [],
@@ -31,3 +31,11 @@ export const useToastStore = create<ToastState>()(
     { name: 'toast-storage', partialize: () => ({}) }
   )
 );
+
+export const useToastStore = toastStore;
+export const useToastActions = () => toastStore((state) => ({
+  showToast: state.showToast,
+  removeToast: state.removeToast,
+}));
+export const showToast = (message: string, type?: ToastType) => 
+  toastStore.getState().showToast(message, type);
