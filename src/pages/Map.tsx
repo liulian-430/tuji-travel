@@ -161,8 +161,6 @@ export default function Map() {
   const [dayToDelete, setDayToDelete] = useState<number | null>(null);
   const [showTripSelector, setShowTripSelector] = useState(false);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const dayScrollRef = useRef<HTMLDivElement | null>(null);
-  const [dayScrollProgress, setDayScrollProgress] = useState(0);
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const paramsHandledRef = useRef(false);
@@ -550,7 +548,7 @@ export default function Map() {
                     }}
                     className="mt-2 w-full py-1.5 text-xs text-primary-mid bg-primary-mid/10 rounded-lg hover:bg-primary-mid/20 transition-colors font-medium"
                   >
-                    修改游玩天数
+                    修改游玩DAY
                   </button>
                 </div>
               </Popup>
@@ -696,19 +694,12 @@ export default function Map() {
 
       {/* Day 切换栏 */}
       <div className="px-4 md:px-6 py-4 bg-white/30 backdrop-blur-xl border-b border-white/20">
-        <div className="max-w-4xl mx-auto">
-          <div
-            ref={dayScrollRef}
-            onScroll={(e) => {
-              const el = e.currentTarget;
-              const max = el.scrollWidth - el.clientWidth;
-              setDayScrollProgress(max > 0 ? el.scrollLeft / max : 0);
-            }}
-            className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-3"
-          >
+        <div className="max-w-4xl mx-auto space-y-3">
+          {/* 第一行：全部行程 + 添加天数 */}
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setViewMode('all')}
-              className={`flex-shrink-0 px-4 py-2 rounded-xl font-medium transition-all ${
+              className={`px-5 py-2.5 rounded-xl font-medium transition-all flex-1 md:flex-none ${
                 viewMode === 'all'
                   ? 'bg-gradient-primary text-white shadow-lg'
                   : 'bg-white/50 text-gray-600 hover:bg-white/70'
@@ -716,46 +707,42 @@ export default function Map() {
             >
               全部行程
             </button>
-
-            {dayOptions.map((day) => {
-              const colorIndex = (day - 1) % dayButtonColors.length;
-              return (
-                <button
-                  key={day}
-                  onClick={() => setViewMode(day)}
-                  onMouseDown={() => handleDayLongPressStart(day)}
-                  onMouseUp={handleDayLongPressEnd}
-                  onMouseLeave={handleDayLongPressEnd}
-                  onTouchStart={() => handleDayLongPressStart(day)}
-                  onTouchEnd={handleDayLongPressEnd}
-                  onContextMenu={(e) => e.preventDefault()}
-                  className={`flex-shrink-0 px-4 py-2 rounded-xl font-medium transition-all select-none ${
-                    viewMode === day
-                      ? `bg-gradient-to-r ${dayButtonColors[colorIndex]} text-white shadow-lg`
-                      : 'bg-white/50 text-gray-600 hover:bg-white/70'
-                  }`}
-                >
-                  Day {day}
-                </button>
-              );
-            })}
-
             <button
               onClick={handleAddDay}
-              className="flex-shrink-0 px-4 py-2 rounded-xl font-medium bg-white/50 text-primary-mid hover:bg-white/70 transition-all flex items-center gap-1.5 border-2 border-dashed border-primary-mid/30"
+              className="px-5 py-2.5 rounded-xl font-medium bg-white/50 text-primary-mid hover:bg-white/70 transition-all flex items-center gap-2 border-2 border-dashed border-primary-mid/30 flex-1 md:flex-none"
             >
-              <Plus size={16} />
+              <Plus size={18} />
               添加天数
             </button>
           </div>
-          {dayScrollProgress > 0 || dayScrollProgress < 1 ? (
-            <div className="mt-2 h-1 bg-white/30 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-primary rounded-full transition-all duration-150"
-                style={{ width: `${Math.max(10, dayScrollProgress * 100)}%`, marginLeft: `${dayScrollProgress * (100 - Math.max(10, dayScrollProgress * 100))}%` }}
-              />
+
+          {/* Day 按钮：5个一行 */}
+          {dayOptions.length > 0 && (
+            <div className="grid grid-cols-5 gap-2 md:gap-3">
+              {dayOptions.map((day) => {
+                const colorIndex = (day - 1) % dayButtonColors.length;
+                return (
+                  <button
+                    key={day}
+                    onClick={() => setViewMode(day)}
+                    onMouseDown={() => handleDayLongPressStart(day)}
+                    onMouseUp={handleDayLongPressEnd}
+                    onMouseLeave={handleDayLongPressEnd}
+                    onTouchStart={() => handleDayLongPressStart(day)}
+                    onTouchEnd={handleDayLongPressEnd}
+                    onContextMenu={(e) => e.preventDefault()}
+                    className={`py-2.5 rounded-xl font-medium transition-all select-none text-sm ${
+                      viewMode === day
+                        ? `bg-gradient-to-r ${dayButtonColors[colorIndex]} text-white shadow-lg`
+                        : 'bg-white/50 text-gray-600 hover:bg-white/70'
+                    }`}
+                  >
+                    Day {day}
+                  </button>
+                );
+              })}
             </div>
-          ) : null}
+          )}
         </div>
       </div>
 
@@ -898,12 +885,12 @@ export default function Map() {
         </div>
       )}
 
-      {/* 修改游玩天数弹窗 */}
+      {/* 修改游玩DAY弹窗 */}
       {showMoveDayModal && movingPoiId && (
         <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 w-[90%] max-w-sm animate-bounce-in">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-800">修改游玩天数</h3>
+              <h3 className="text-lg font-bold text-gray-800">修改游玩DAY</h3>
               <button
                 onClick={() => {
                   setShowMoveDayModal(false);
