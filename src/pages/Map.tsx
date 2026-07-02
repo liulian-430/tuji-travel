@@ -143,7 +143,7 @@ function MapController({
 export default function Map() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { trips, addPOIToTrip, removePOIFromTrip, movePOIToDay, addDayToTrip } = useTripStore();
+  const { trips, addPOIToTrip, removePOIFromTrip, movePOIToDay, addDayToTrip, removeDayFromTrip } = useTripStore();
   const { showToast } = useToastStore();
 
   const [selectedTripId, setSelectedTripId] = useState<string>('');
@@ -158,6 +158,9 @@ export default function Map() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showMoveDayModal, setShowMoveDayModal] = useState(false);
   const [movingPoiId, setMovingPoiId] = useState<string | null>(null);
+  const [dayToDelete, setDayToDelete] = useState<number | null>(null);
+  const [showTripSelector, setShowTripSelector] = useState(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const paramsHandledRef = useRef(false);
@@ -179,20 +182,29 @@ export default function Map() {
       }
       paramsHandledRef.current = true;
     } else if (trips.length > 0 && !selectedTripId) {
-      setSelectedTripId(trips[0].id);
+      const firstPlanning = trips.find((t) => t.status !== 'completed');
+      if (firstPlanning) {
+        setSelectedTripId(firstPlanning.id);
+      }
     }
   }, [searchParams, trips, selectedTripId, showToast]);
 
   useEffect(() => {
-    if (trips.length > 0 && !trips.find((t) => t.id === selectedTripId)) {
-      setSelectedTripId(trips[0].id);
+    const planningTrips = trips.filter((t) => t.status !== 'completed');
+    if (planningTrips.length > 0 && !planningTrips.find((t) => t.id === selectedTripId)) {
+      setSelectedTripId(planningTrips[0].id);
     }
   }, [trips, selectedTripId]);
 
+  // 只显示进行中的行程（过滤掉已完成的）
+  const planningTrips = useMemo(() => {
+    return trips.filter((t) => t.status !== 'completed');
+  }, [trips]);
+
   const selectedTrip = useMemo(() => {
-    if (trips.length === 0) return null;
-    return trips.find((t) => t.id === selectedTripId) || trips[0];
-  }, [trips, selectedTripId]);
+    if (planningTrips.length === 0) return null;
+    return planningTrips.find((t) => t.id === selectedTripId) || planningTrips[0];
+  }, [planningTrips, selectedTripId]);
 
   // Day 选项：优先使用 daysList，否则按行程天数生成
   const dayOptions = useMemo(() => {
@@ -298,8 +310,39 @@ export default function Map() {
   // 添加游玩天数
   const handleAddDay = () => {
     if (!selectedTrip) return;
+    const currentMax = selectedTrip.daysList && selectedTrip.daysList.length > 0
+      ? Math.max(...selectedTrip.daysList.map((d: any) => d.day), selectedTrip.days || 0)
+      : selectedTrip.days || 0;
     addDayToTrip(selectedTrip.id);
-    showToast(`已添加 Day ${selectedTrip.days + 1}`, 'success');
+    showToast(`已添加 Day ${currentMax + 1}`, 'success');
+  };
+
+  // 长按开始
+  const handleDayLongPressStart = (day: number) => {
+    longPressTimerRef.current = setTimeout(() => {
+      setDayToDelete(day);
+    }, 600);
+  };
+
+  // 长按结束
+  const handleDayLongPressEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  // 确认删除天数
+  const handleDeleteDay = () => {
+    if (!selectedTrip || dayToDelete === null) return;
+    removeDayFromTrip(selectedTrip.id, dayToDelete);
+    showToast(`已删除 Day ${dayToDelete}`, 'success');
+    if (viewMode === dayToDelete) {
+      setViewMode('all');
+    } else if (typeof viewMode === 'number' && viewMode > dayToDelete) {
+      setViewMode(viewMode - 1);
+    }
+    setDayToDelete(null);
   };
 
   // 打开修改天数弹窗
@@ -514,29 +557,53 @@ export default function Map() {
           </button>
         </div>
 
-        {/* 行程选择器（存在多个行程时显示） */}
-        {trips.length > 1 && (
-          <div className="absolute top-3 left-3 right-3 z-[1000] flex gap-2 overflow-x-auto scrollbar-hide">
-            {trips.map((trip) => {
-              const active = trip.id === selectedTrip.id;
-              return (
-                <button
-                  key={trip.id}
-                  onClick={() => {
-                    setSelectedTripId(trip.id);
-                    setViewMode('all');
-                    setSelectedPoi(null);
-                  }}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-xl border transition-all ${
-                    active
-                      ? 'bg-gradient-primary text-white border-transparent shadow-lg'
-                      : 'bg-white/60 text-gray-700 border-white/40 hover:bg-white/80'
-                  }`}
-                >
-                  {trip.name}
-                </button>
-              );
-            })}
+        {/* 左上角行程切换按钮 */}
+        {planningTrips.length > 0 && (
+          <div className="absolute top-3 left-3 z-[1000]">
+            <button
+              onClick={() => setShowTripSelector(!showTripSelector)}
+              className="glass-card px-3 py-2 flex items-center gap-2 hover:bg-white/40 transition-colors"
+            >
+              <MapPin size={16} className="text-primary-mid" />
+              <span className="text-sm font-medium text-gray-800 max-w-[140px] truncate">
+                {selectedTrip?.name || '选择行程'}
+              </span>
+              <ChevronDown size={14} className={`text-gray-500 transition-transform ${showTripSelector ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showTripSelector && (
+              <div className="absolute top-full left-0 mt-2 glass-card rounded-xl p-2 min-w-[200px] max-h-64 overflow-y-auto">
+                {planningTrips.map((trip) => {
+                  const active = trip.id === selectedTrip?.id;
+                  return (
+                    <button
+                      key={trip.id}
+                      onClick={() => {
+                        setSelectedTripId(trip.id);
+                        setViewMode('all');
+                        setSelectedPoi(null);
+                        setShowTripSelector(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
+                        active
+                          ? 'bg-primary-mid/10 text-primary-mid font-medium'
+                          : 'text-gray-700 hover:bg-white/50'
+                      }`}
+                    >
+                      <img
+                        src={trip.coverImage}
+                        alt={trip.name}
+                        className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate">{trip.name}</p>
+                        <p className="text-xs text-gray-400">{trip.days}天 · {trip.pois?.length || 0}个景点</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -630,7 +697,13 @@ export default function Map() {
                 <button
                   key={day}
                   onClick={() => setViewMode(day)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-xl font-medium transition-all ${
+                  onMouseDown={() => handleDayLongPressStart(day)}
+                  onMouseUp={handleDayLongPressEnd}
+                  onMouseLeave={handleDayLongPressEnd}
+                  onTouchStart={() => handleDayLongPressStart(day)}
+                  onTouchEnd={handleDayLongPressEnd}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className={`flex-shrink-0 px-4 py-2 rounded-xl font-medium transition-all select-none ${
                     viewMode === day
                       ? `bg-gradient-to-r ${dayButtonColors[colorIndex]} text-white shadow-lg`
                       : 'bg-white/50 text-gray-600 hover:bg-white/70'
@@ -828,6 +901,37 @@ export default function Map() {
             >
               取消
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 删除天数确认弹窗 */}
+      {dayToDelete !== null && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 w-[90%] max-w-sm animate-bounce-in">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 size={24} className="text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">删除 Day {dayToDelete}？</h3>
+                <p className="text-sm text-gray-500">该天的所有景点将被移除</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDayToDelete(null)}
+                className="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors font-medium"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleDeleteDay}
+                className="flex-1 py-3 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors font-medium"
+              >
+                删除
+              </button>
+            </div>
           </div>
         </div>
       )}

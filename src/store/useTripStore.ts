@@ -206,7 +206,10 @@ export const useTripStore = create<TripState>()(
       addDayToTrip: (tripId) => set((state) => ({
         trips: state.trips.map((t) => {
           if (t.id !== tripId) return t;
-          const nextDay = t.days + 1;
+          const currentDays = t.daysList && t.daysList.length > 0
+            ? Math.max(...t.daysList.map((d) => d.day), t.days || 0)
+            : t.days || 0;
+          const nextDay = currentDays + 1;
           const newDaysList = t.daysList ? [...t.daysList] : [];
           if (!newDaysList.find((d) => d.day === nextDay)) {
             newDaysList.push({ day: nextDay });
@@ -222,17 +225,21 @@ export const useTripStore = create<TripState>()(
       removeDayFromTrip: (tripId, day) => set((state) => ({
         trips: state.trips.map((t) => {
           if (t.id !== tripId) return t;
-          const newDaysList = (t.daysList || []).filter((d) => d.day !== day);
+          const filteredList = (t.daysList || []).filter((d) => d.day !== day);
           const poisInDay = (t.daysList || [])
             .find((d) => d.day === day)
             ?.afternoon || [];
           const newPois = t.pois.filter(
             (p) => !poisInDay.find((pp) => pp.id === p.id)
           );
+          const newDaysList = filteredList
+            .sort((a, b) => a.day - b.day)
+            .map((d, idx) => ({ ...d, day: idx + 1 }));
           return {
             ...t,
             pois: newPois,
-            daysList: newDaysList,
+            days: newDaysList.length,
+            daysList: newDaysList.length > 0 ? newDaysList : undefined,
           };
         }),
       })),
