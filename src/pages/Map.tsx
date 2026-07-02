@@ -50,7 +50,7 @@ const dayButtonColors = [
 ];
 
 // 创建自定义圆点图标：根据 POI 类型上色，选中时放大高亮
-const createPoiIcon = (type: string, selected: boolean, dayNum?: number | null) => {
+const createPoiIcon = (type: string, selected: boolean, label?: number | null) => {
   const color = poiTypeColors[type] || '#6366f1';
   const size = selected ? 36 : 28;
   const innerSize = selected ? 22 : 16;
@@ -71,7 +71,7 @@ const createPoiIcon = (type: string, selected: boolean, dayNum?: number | null) 
           background:${color};
           box-shadow:inset 0 1px 2px rgba(255,255,255,0.3);
         "></div>
-        ${dayNum ? `
+        ${label ? `
           <span style="
             position:absolute;
             top:-8px;right:-8px;
@@ -84,7 +84,7 @@ const createPoiIcon = (type: string, selected: boolean, dayNum?: number | null) 
             display:flex;align-items:center;justify-content:center;
             box-shadow:0 2px 6px rgba(99,102,241,0.5);
             border:2px solid white;
-          ">${dayNum}</span>
+          ">${label}</span>
         ` : ''}
       </div>
     `,
@@ -245,14 +245,16 @@ export default function Map() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTrip, viewMode]);
 
-  // 用于地图 Marker 的位置数据
+  // 用于地图 Marker 的位置数据（保持行程顺序）
   const markerData = useMemo(() => {
+    let order = 0;
     return displayedPois
       .filter((p) => typeof p.latitude === 'number' && typeof p.longitude === 'number')
       .map((p) => ({
         poi: p,
         position: [p.latitude as number, p.longitude as number] as [number, number],
         day: getDayForPoi(p.id),
+        order: ++order,
       }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayedPois, selectedTrip]);
@@ -514,6 +516,7 @@ export default function Map() {
           />
           {viewMode !== 'all' && markerData.length > 1 && (
             <Polyline
+              key={markerData.map((m) => m.poi.id).join('-')}
               positions={markerData.map((m) => m.position)}
               color="#6366f1"
               weight={4}
@@ -521,11 +524,11 @@ export default function Map() {
               dashArray="10, 8"
             />
           )}
-          {markerData.map(({ poi, position, day }) => (
+          {markerData.map(({ poi, position, day, order }) => (
             <Marker
               key={poi.id}
               position={position}
-              icon={createPoiIcon(poi.type, selectedPoi === poi.id, day)}
+              icon={createPoiIcon(poi.type, selectedPoi === poi.id, viewMode !== 'all' ? order : day)}
               eventHandlers={{ click: () => setSelectedPoi(poi.id) }}
             >
               <Popup>
