@@ -75,7 +75,6 @@ export default function GuideDetail() {
       }
     }
     setShowAddModal(false);
-    navigate(`/map?trip=${selectedTrip}`);
   };
 
   const handleFavorite = () => {

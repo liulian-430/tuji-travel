@@ -215,7 +215,7 @@ export default function Search() {
                 {poiResults.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {poiResults.map((poi) => (
-                      <POICard key={poi.id} poi={poi} />
+                      <POICard key={poi.id} poi={poi} showAddButton />
                     ))}
                   </div>
                 ) : (
@@ -317,7 +317,7 @@ export default function Search() {
               <h3 className="font-medium text-gray-700 mb-4">推荐景点</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {recommendedPOIs.map((poi) => (
-                  <POICard key={poi.id} poi={poi} />
+                  <POICard key={poi.id} poi={poi} showAddButton />
                 ))}
               </div>
             </div>

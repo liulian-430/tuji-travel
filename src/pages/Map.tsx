@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapPin, Search, Plus, Navigation, Layers, ChevronDown, Trash2, X } from 'lucide-react';
+import { MapPin, Search, Plus, Navigation, Layers, ChevronDown, Trash2, X, Maximize2, Minimize2, Edit3, PlusCircle, Minus } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import GlassCard from '../components/ui/GlassCard';
 import EmptyState from '../components/ui/EmptyState';
@@ -48,23 +48,47 @@ const dayButtonColors = [
 ];
 
 // 创建自定义圆点图标：根据 POI 类型上色，选中时放大高亮
-const createPoiIcon = (type: string, selected: boolean) => {
+const createPoiIcon = (type: string, selected: boolean, dayNum?: number | null) => {
   const color = poiTypeColors[type] || '#6366f1';
-  const size = selected ? 26 : 18;
+  const size = selected ? 36 : 28;
+  const innerSize = selected ? 22 : 16;
   return L.divIcon({
     className: 'custom-poi-marker',
     html: `
       <div style="
         width:${size}px;height:${size}px;border-radius:50%;
-        background:${color};
-        border:3px solid #fff;
-        box-shadow:0 0 0 2px ${color}55, 0 2px 8px rgba(0,0,0,0.35);
-        transition:all 0.2s ease;
-      "></div>
+        background:rgba(255,255,255,0.95);
+        border:3px solid ${color};
+        box-shadow:0 4px 16px rgba(0,0,0,0.25), 0 0 0 4px ${color}33;
+        display:flex;align-items:center;justify-content:center;
+        transition:all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        position:relative;
+      ">
+        <div style="
+          width:${innerSize}px;height:${innerSize}px;border-radius:50%;
+          background:${color};
+          box-shadow:inset 0 1px 2px rgba(255,255,255,0.3);
+        "></div>
+        ${dayNum ? `
+          <span style="
+            position:absolute;
+            top:-8px;right:-8px;
+            width:20px;height:20px;
+            border-radius:50%;
+            background:linear-gradient(135deg, #6366f1, #8b5cf6);
+            color:white;
+            font-size:11px;
+            font-weight:bold;
+            display:flex;align-items:center;justify-content:center;
+            box-shadow:0 2px 6px rgba(99,102,241,0.5);
+            border:2px solid white;
+          ">${dayNum}</span>
+        ` : ''}
+      </div>
     `,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
-    popupAnchor: [0, -size / 2],
+    popupAnchor: [0, -size / 2 - 4],
   });
 };
 
@@ -119,7 +143,7 @@ function MapController({
 export default function Map() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { trips, addPOIToTrip, removePOIFromTrip } = useTripStore();
+  const { trips, addPOIToTrip, removePOIFromTrip, movePOIToDay, addDayToTrip } = useTripStore();
   const { showToast } = useToastStore();
 
   const [selectedTripId, setSelectedTripId] = useState<string>('');
@@ -131,7 +155,11 @@ export default function Map() {
   const [poiToAdd, setPoiToAdd] = useState<POI | null>(null);
   const [showLayerPanel, setShowLayerPanel] = useState(false);
   const [activeLayer, setActiveLayer] = useState('standard');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showMoveDayModal, setShowMoveDayModal] = useState(false);
+  const [movingPoiId, setMovingPoiId] = useState<string | null>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const paramsHandledRef = useRef(false);
 
   useEffect(() => {
@@ -261,11 +289,49 @@ export default function Map() {
       latitude: poiToAdd.latitude,
       longitude: poiToAdd.longitude,
     };
-    addPOIToTrip(selectedTrip.id, newPoi);
+    addPOIToTrip(selectedTrip.id, newPoi, day);
     setShowAddDayModal(false);
     setPoiToAdd(null);
-    setViewMode('all');
+    showToast(`已添加到 Day ${day}`, 'success');
   };
+
+  // 添加游玩天数
+  const handleAddDay = () => {
+    if (!selectedTrip) return;
+    addDayToTrip(selectedTrip.id);
+    showToast(`已添加 Day ${selectedTrip.days + 1}`, 'success');
+  };
+
+  // 打开修改天数弹窗
+  const handleOpenMoveDay = (poiId: string) => {
+    setMovingPoiId(poiId);
+    setShowMoveDayModal(true);
+  };
+
+  // 确认移动到某天
+  const handleMoveToDay = (day: number) => {
+    if (!movingPoiId || !selectedTrip) return;
+    movePOIToDay(selectedTrip.id, movingPoiId, day);
+    setShowMoveDayModal(false);
+    setMovingPoiId(null);
+    showToast(`已移动到 Day ${day}`, 'success');
+  };
+
+  // 切换全屏
+  const toggleFullscreen = () => {
+    if (!mapContainerRef.current) return;
+    if (!document.fullscreenElement) {
+      mapContainerRef.current.requestFullscreen?.();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.();
+      setIsFullscreen(false);
+    }
+  };
+
+  // 自定义缩放
+  const handleZoomIn = () => mapRef.current?.zoomIn();
+  const handleZoomOut = () => mapRef.current?.zoomOut();
 
   // 右滑删除：从 store 中移除
   const handleDeletePoi = (poiId: string) => {
@@ -290,6 +356,12 @@ export default function Map() {
     setPoiToAdd(null);
   }, []);
   useEscKey(closeAddDayModal, showAddDayModal);
+
+  const closeMoveDayModal = useCallback(() => {
+    setShowMoveDayModal(false);
+    setMovingPoiId(null);
+  }, []);
+  useEscKey(closeMoveDayModal, showMoveDayModal);
 
   // 空状态：store 中没有行程数据
   if (trips.length === 0 || !selectedTrip) {
@@ -361,12 +433,20 @@ export default function Map() {
       </div>
 
       {/* 地图区域 */}
-      <div className="relative h-[40vh] md:h-[45vh] overflow-hidden">
+      <div
+        ref={mapContainerRef}
+        className={`relative overflow-hidden transition-all duration-300 ${
+          isFullscreen
+            ? 'fixed inset-0 z-[2000] h-screen w-screen rounded-none'
+            : 'h-[40vh] md:h-[50vh]'
+        }`}
+      >
         <MapContainer
           key={selectedTrip.id}
           center={mapCenter}
           zoom={12}
           scrollWheelZoom
+          zoomControl={false}
           className="w-full h-full"
         >
           <TileLayer
@@ -378,32 +458,61 @@ export default function Map() {
             <Marker
               key={poi.id}
               position={position}
-              icon={createPoiIcon(poi.type, selectedPoi === poi.id)}
+              icon={createPoiIcon(poi.type, selectedPoi === poi.id, day)}
               eventHandlers={{ click: () => setSelectedPoi(poi.id) }}
             >
               <Popup>
-                <div className="min-w-[160px]">
-                  <div className="flex items-center gap-2 mb-1">
+                <div className="min-w-[180px]">
+                  <div className="flex items-center gap-2 mb-2">
                     <span
-                      className="inline-block w-2.5 h-2.5 rounded-full"
+                      className="inline-block w-3 h-3 rounded-full"
                       style={{ background: poiTypeColors[poi.type] || '#6366f1' }}
                     />
                     <span className={`text-xs px-2 py-0.5 rounded border ${typeColors[poi.type]}`}>
                       {typeLabels[poi.type]}
                     </span>
-                    {day && <span className="text-xs text-gray-500">Day {day}</span>}
+                    {day && (
+                      <span className="text-xs font-medium text-primary-mid bg-primary-mid/10 px-2 py-0.5 rounded-full">
+                        Day {day}
+                      </span>
+                    )}
                   </div>
-                  <p className="font-semibold text-gray-800">{poi.name}</p>
+                  <p className="font-semibold text-gray-800 text-sm">{poi.name}</p>
                   {poi.duration && (
                     <p className="text-xs text-gray-500 mt-1">游玩时长：{poi.duration}</p>
                   )}
-                  {poi.price > 0 && <p className="text-xs text-primary-mid mt-0.5">¥{poi.price}</p>}
+                  {poi.price > 0 && <p className="text-xs text-primary-mid mt-1 font-medium">¥{poi.price}</p>}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenMoveDay(poi.id);
+                    }}
+                    className="mt-2 w-full py-1.5 text-xs text-primary-mid bg-primary-mid/10 rounded-lg hover:bg-primary-mid/20 transition-colors font-medium"
+                  >
+                    修改游玩天数
+                  </button>
                 </div>
               </Popup>
             </Marker>
           ))}
           <MapController positions={fitPositions} mapRef={mapRef} />
         </MapContainer>
+
+        {/* 自定义缩放控件 */}
+        <div className="absolute bottom-4 right-3 z-[1000] flex flex-col gap-1">
+          <button
+            onClick={handleZoomIn}
+            className="glass-card w-10 h-10 flex items-center justify-center hover:bg-white/50 active:scale-95 transition-all"
+          >
+            <PlusCircle size={20} className="text-gray-700" />
+          </button>
+          <button
+            onClick={handleZoomOut}
+            className="glass-card w-10 h-10 flex items-center justify-center hover:bg-white/50 active:scale-95 transition-all"
+          >
+            <Minus size={20} className="text-gray-700" />
+          </button>
+        </div>
 
         {/* 行程选择器（存在多个行程时显示） */}
         {trips.length > 1 && (
@@ -433,6 +542,17 @@ export default function Map() {
 
         {/* 地图右上角工具按钮 */}
         <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
+          <button
+            onClick={toggleFullscreen}
+            className="glass-card p-3 hover:bg-white/40 transition-colors"
+            title={isFullscreen ? '退出全屏' : '全屏显示'}
+          >
+            {isFullscreen ? (
+              <Minimize2 size={20} className="text-gray-700" />
+            ) : (
+              <Maximize2 size={20} className="text-gray-700" />
+            )}
+          </button>
           <div className="relative">
             <button
               onClick={() => setShowLayerPanel(!showLayerPanel)}
@@ -520,6 +640,14 @@ export default function Map() {
                 </button>
               );
             })}
+
+            <button
+              onClick={handleAddDay}
+              className="flex-shrink-0 px-4 py-2 rounded-xl font-medium bg-white/50 text-primary-mid hover:bg-white/70 transition-all flex items-center gap-1.5 border-2 border-dashed border-primary-mid/30"
+            >
+              <Plus size={16} />
+              添加天数
+            </button>
           </div>
         </div>
       </div>
@@ -569,10 +697,16 @@ export default function Map() {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <span>{day ? `Day${day}` : '全部'}</span>
-                        <ChevronDown size={14} className="text-gray-400" />
-                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenMoveDay(poi.id);
+                        }}
+                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-primary-mid transition-colors px-2 py-1 rounded-lg hover:bg-primary-mid/10"
+                      >
+                        <span className="font-medium">{day ? `Day${day}` : '未安排'}</span>
+                        <Edit3 size={12} className="text-gray-400" />
+                      </button>
                     </div>
                   </GlassCard>
                 </SwipeableCard>
@@ -636,6 +770,59 @@ export default function Map() {
               onClick={() => {
                 setShowAddDayModal(false);
                 setPoiToAdd(null);
+              }}
+              className="w-full mt-6 py-3 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 修改游玩天数弹窗 */}
+      {showMoveDayModal && movingPoiId && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 w-[90%] max-w-sm animate-bounce-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-800">修改游玩天数</h3>
+              <button
+                onClick={() => {
+                  setShowMoveDayModal(false);
+                  setMovingPoiId(null);
+                }}
+                className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <X size={18} className="text-gray-500" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              {dayOptions.map((day) => {
+                const colorIndex = (day - 1) % dayButtonColors.length;
+                return (
+                  <button
+                    key={day}
+                    onClick={() => handleMoveToDay(day)}
+                    className="w-full p-3 rounded-xl flex items-center justify-between transition-all hover:bg-white/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br ${dayButtonColors[colorIndex]}`}
+                      >
+                        {day}
+                      </div>
+                      <span className="font-medium text-gray-800">Day {day}</span>
+                    </div>
+                  </button>
+                );
+              })}
+              {dayOptions.length === 0 && (
+                <p className="text-center text-gray-500 text-sm py-4">暂无可选天数</p>
+              )}
+            </div>
+            <button
+              onClick={() => {
+                setShowMoveDayModal(false);
+                setMovingPoiId(null);
               }}
               className="w-full mt-6 py-3 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
             >

@@ -90,8 +90,11 @@ interface TripState {
   addTrip: (trip: Trip) => void;
   removeTrip: (tripId: string) => void;
   updateTrip: (tripId: string, updates: Partial<Trip>) => void;
-  addPOIToTrip: (tripId: string, poi: TripPOI) => void;
+  addPOIToTrip: (tripId: string, poi: TripPOI, day?: number) => void;
   removePOIFromTrip: (tripId: string, poiId: string) => void;
+  movePOIToDay: (tripId: string, poiId: string, targetDay: number) => void;
+  addDayToTrip: (tripId: string) => void;
+  removeDayFromTrip: (tripId: string, day: number) => void;
   completeTrip: (tripId: string) => void;
   addExpense: (expense: Expense) => void;
   removeExpense: (expenseId: string) => void;
@@ -126,17 +129,112 @@ export const useTripStore = create<TripState>()(
           t.id === tripId ? { ...t, ...updates } : t
         ),
       })),
-      addPOIToTrip: (tripId, poi) => set((state) => ({
-        trips: state.trips.map((t) =>
-          t.id === tripId ? { ...t, pois: [...t.pois, poi] } : t
-        ),
+      addPOIToTrip: (tripId, poi, day) => set((state) => ({
+        trips: state.trips.map((t) => {
+          if (t.id !== tripId) return t;
+          const newDaysList = t.daysList ? [...t.daysList] : [];
+          if (day !== undefined) {
+            const dayIdx = newDaysList.findIndex((d) => d.day === day);
+            if (dayIdx >= 0) {
+              newDaysList[dayIdx] = {
+                ...newDaysList[dayIdx],
+                afternoon: [...(newDaysList[dayIdx].afternoon || []), poi],
+              };
+            } else {
+              newDaysList.push({ day, afternoon: [poi] });
+              newDaysList.sort((a, b) => a.day - b.day);
+            }
+          }
+          return {
+            ...t,
+            pois: [...t.pois, poi],
+            daysList: newDaysList,
+            days: day !== undefined
+              ? Math.max(t.days, day)
+              : t.days,
+          };
+        }),
       })),
       removePOIFromTrip: (tripId, poiId) => set((state) => ({
-        trips: state.trips.map((t) =>
-          t.id === tripId
-            ? { ...t, pois: t.pois.filter((p) => p.id !== poiId) }
-            : t
-        ),
+        trips: state.trips.map((t) => {
+          if (t.id !== tripId) return t;
+          const newDaysList = (t.daysList || []).map((d) => ({
+            ...d,
+            morning: (d.morning || []).filter((p) => p.id !== poiId),
+            afternoon: (d.afternoon || []).filter((p) => p.id !== poiId),
+            evening: (d.evening || []).filter((p) => p.id !== poiId),
+          }));
+          return {
+            ...t,
+            pois: t.pois.filter((p) => p.id !== poiId),
+            daysList: newDaysList,
+          };
+        }),
+      })),
+      movePOIToDay: (tripId, poiId, targetDay) => set((state) => ({
+        trips: state.trips.map((t) => {
+          if (t.id !== tripId) return t;
+          const poi = t.pois.find((p) => p.id === poiId);
+          if (!poi) return t;
+          let newDaysList: DayScheduleSimple[] = (t.daysList || []).map((d) => ({
+            day: d.day,
+            morning: (d.morning || []).filter((p) => p.id !== poiId),
+            afternoon: (d.afternoon || []).filter((p) => p.id !== poiId),
+            evening: (d.evening || []).filter((p) => p.id !== poiId),
+          }));
+          const targetIdx = newDaysList.findIndex((d) => d.day === targetDay);
+          if (targetIdx >= 0) {
+            newDaysList[targetIdx] = {
+              ...newDaysList[targetIdx],
+              afternoon: [...(newDaysList[targetIdx].afternoon || []), poi],
+            };
+          } else {
+            newDaysList.push({ day: targetDay, afternoon: [poi] });
+            newDaysList.sort((a, b) => a.day - b.day);
+          }
+          newDaysList = newDaysList.filter(
+            (d) => (d.morning?.length || 0) + (d.afternoon?.length || 0) + (d.evening?.length || 0) > 0
+          );
+          const maxDay = newDaysList.length > 0 ? Math.max(...newDaysList.map((d) => d.day)) : t.days;
+          return {
+            ...t,
+            daysList: newDaysList,
+            days: Math.max(t.days, maxDay),
+          };
+        }),
+      })),
+      addDayToTrip: (tripId) => set((state) => ({
+        trips: state.trips.map((t) => {
+          if (t.id !== tripId) return t;
+          const nextDay = t.days + 1;
+          const newDaysList = t.daysList ? [...t.daysList] : [];
+          if (!newDaysList.find((d) => d.day === nextDay)) {
+            newDaysList.push({ day: nextDay });
+            newDaysList.sort((a, b) => a.day - b.day);
+          }
+          return {
+            ...t,
+            days: nextDay,
+            daysList: newDaysList,
+          };
+        }),
+      })),
+      removeDayFromTrip: (tripId, day) => set((state) => ({
+        trips: state.trips.map((t) => {
+          if (t.id !== tripId) return t;
+          const newDaysList = (t.daysList || []).filter((d) => d.day !== day);
+          const poisInDay = (t.daysList || [])
+            .find((d) => d.day === day)
+            ?.afternoon || [];
+          const newPois = t.pois.filter(
+            (p) => !poisInDay.find((pp) => pp.id === p.id)
+          );
+          return {
+            ...t,
+            pois: newPois,
+            daysList: newDaysList,
+          };
+        }),
       })),
       completeTrip: (tripId) => set((state) => ({
         trips: state.trips.map((t) =>
