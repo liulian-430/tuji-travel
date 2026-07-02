@@ -111,154 +111,153 @@ interface TripState {
   updateCollaboratorRole: (collaboratorId: string, role: Collaborator['role']) => void;
 }
 
+function computeDays(daysList?: DayScheduleSimple[], fallback?: number): number {
+  if (!daysList || daysList.length === 0) return fallback || 1;
+  return Math.max(...daysList.map((d) => d.day));
+}
+
 export const useTripStore = create<TripState>()(
   persist(
-    (set) => {
-      const computeDays = (daysList?: DayScheduleSimple[], fallback?: number): number => {
-        if (!daysList || daysList.length === 0) return fallback || 1;
-        return Math.max(...daysList.map((d) => d.day));
-      };
-
-      return {
-        trips: [],
-        currentTripId: null,
-        expenses: [],
-        budgets: [],
-        favoritePOIs: [],
-        visitedCities: [],
-        pendingTrip: null,
-        undoStack: [],
-        setPendingTrip: (trip) => set({ pendingTrip: trip }),
-        clearPendingTrip: () => set({ pendingTrip: null }),
-        setCurrentTrip: (tripId) => set({ currentTripId: tripId }),
-        addTrip: (trip) => set((state) => ({ trips: [trip, ...state.trips], currentTripId: state.currentTripId || trip.id })),
-        removeTrip: (tripId) => set((state) => {
-          const deletedTrip = state.trips.find((t) => t.id === tripId);
-          if (!deletedTrip) return state;
-          return {
-            trips: state.trips.filter((t) => t.id !== tripId),
-            undoStack: [...state.undoStack, { type: 'removeTrip', payload: deletedTrip }],
-          };
-        }),
-        updateTrip: (tripId, updates) => set((state) => ({
-          trips: state.trips.map((t) =>
-            t.id === tripId ? { ...t, ...updates } : t
-          ),
-        })),
-        addPOIToTrip: (tripId, poi, day) => set((state) => ({
-          trips: state.trips.map((t) => {
-            if (t.id !== tripId) return t;
-            const newDaysList = t.daysList ? [...t.daysList] : [];
-            if (day !== undefined) {
-              const dayIdx = newDaysList.findIndex((d) => d.day === day);
-              if (dayIdx >= 0) {
-                newDaysList[dayIdx] = {
-                  ...newDaysList[dayIdx],
-                  afternoon: [...(newDaysList[dayIdx].afternoon || []), poi],
-                };
-              } else {
-                newDaysList.push({ day, afternoon: [poi] });
-                newDaysList.sort((a, b) => a.day - b.day);
-              }
-            }
-            return {
-              ...t,
-              pois: [...t.pois, poi],
-              daysList: newDaysList,
-              days: computeDays(newDaysList, t.days),
-            };
-          }),
-        })),
-        removePOIFromTrip: (tripId, poiId) => set((state) => {
-          const trip = state.trips.find((t) => t.id === tripId);
-          if (!trip) return state;
-          const deletedPOI = trip.pois.find((p) => p.id === poiId);
-          if (!deletedPOI) return state;
-          return {
-            trips: state.trips.map((t) => {
-              if (t.id !== tripId) return t;
-              const newDaysList = (t.daysList || []).map((d) => ({
-                ...d,
-                morning: (d.morning || []).filter((p) => p.id !== poiId),
-                afternoon: (d.afternoon || []).filter((p) => p.id !== poiId),
-                evening: (d.evening || []).filter((p) => p.id !== poiId),
-              }));
-              return {
-                ...t,
-                pois: t.pois.filter((p) => p.id !== poiId),
-                daysList: newDaysList,
-                days: computeDays(newDaysList, t.days),
+    (set) => ({
+      trips: [],
+      currentTripId: null,
+      expenses: [],
+      budgets: [],
+      favoritePOIs: [],
+      visitedCities: [],
+      pendingTrip: null,
+      undoStack: [],
+      setPendingTrip: (trip) => set({ pendingTrip: trip }),
+      clearPendingTrip: () => set({ pendingTrip: null }),
+      setCurrentTrip: (tripId) => set({ currentTripId: tripId }),
+      addTrip: (trip) => set((state) => ({ trips: [trip, ...state.trips], currentTripId: state.currentTripId || trip.id })),
+      removeTrip: (tripId) => set((state) => {
+        const deletedTrip = state.trips.find((t) => t.id === tripId);
+        if (!deletedTrip) return state;
+        return {
+          trips: state.trips.filter((t) => t.id !== tripId),
+          undoStack: [...state.undoStack, { type: 'removeTrip', payload: deletedTrip }],
+        };
+      }),
+      updateTrip: (tripId, updates) => set((state) => ({
+        trips: state.trips.map((t) =>
+          t.id === tripId ? { ...t, ...updates } : t
+        ),
+      })),
+      addPOIToTrip: (tripId, poi, day) => set((state) => ({
+        trips: state.trips.map((t) => {
+          if (t.id !== tripId) return t;
+          const newDaysList = t.daysList ? [...t.daysList] : [];
+          if (day !== undefined) {
+            const dayIdx = newDaysList.findIndex((d) => d.day === day);
+            if (dayIdx >= 0) {
+              newDaysList[dayIdx] = {
+                ...newDaysList[dayIdx],
+                afternoon: [...(newDaysList[dayIdx].afternoon || []), poi],
               };
-            }),
-            undoStack: [...state.undoStack, { type: 'removePOI', payload: { tripId, poi: deletedPOI } }],
+            } else {
+              newDaysList.push({ day, afternoon: [poi] });
+              newDaysList.sort((a, b) => a.day - b.day);
+            }
+          }
+          return {
+            ...t,
+            pois: [...t.pois, poi],
+            daysList: newDaysList,
+            days: computeDays(newDaysList, t.days),
           };
         }),
-        movePOIToDay: (tripId, poiId, targetDay) => set((state) => ({
+      })),
+      removePOIFromTrip: (tripId, poiId) => set((state) => {
+        const trip = state.trips.find((t) => t.id === tripId);
+        if (!trip) return state;
+        const deletedPOI = trip.pois.find((p) => p.id === poiId);
+        if (!deletedPOI) return state;
+        return {
           trips: state.trips.map((t) => {
             if (t.id !== tripId) return t;
-            const poi = t.pois.find((p) => p.id === poiId);
-            if (!poi) return t;
-            const newDaysList: DayScheduleSimple[] = (t.daysList || []).map((d) => ({
-              day: d.day,
+            const newDaysList = (t.daysList || []).map((d) => ({
+              ...d,
               morning: (d.morning || []).filter((p) => p.id !== poiId),
               afternoon: (d.afternoon || []).filter((p) => p.id !== poiId),
               evening: (d.evening || []).filter((p) => p.id !== poiId),
             }));
-            const targetIdx = newDaysList.findIndex((d) => d.day === targetDay);
-            if (targetIdx >= 0) {
-              newDaysList[targetIdx] = {
-                ...newDaysList[targetIdx],
-                afternoon: [...(newDaysList[targetIdx].afternoon || []), poi],
-              };
-            } else {
-              newDaysList.push({ day: targetDay, afternoon: [poi] });
-              newDaysList.sort((a, b) => a.day - b.day);
-            }
             return {
               ...t,
+              pois: t.pois.filter((p) => p.id !== poiId),
               daysList: newDaysList,
               days: computeDays(newDaysList, t.days),
             };
           }),
-        })),
-        addDayToTrip: (tripId) => set((state) => ({
-          trips: state.trips.map((t) => {
-            if (t.id !== tripId) return t;
-            const currentDays = computeDays(t.daysList, t.days);
-            const nextDay = currentDays + 1;
-            const newDaysList = t.daysList ? [...t.daysList] : [];
-            if (!newDaysList.find((d) => d.day === nextDay)) {
-              newDaysList.push({ day: nextDay });
-              newDaysList.sort((a, b) => a.day - b.day);
-            }
-            return {
-              ...t,
-              days: nextDay,
-              daysList: newDaysList,
+          undoStack: [...state.undoStack, { type: 'removePOI', payload: { tripId, poi: deletedPOI } }],
+        };
+      }),
+      movePOIToDay: (tripId, poiId, targetDay) => set((state) => ({
+        trips: state.trips.map((t) => {
+          if (t.id !== tripId) return t;
+          const poi = t.pois.find((p) => p.id === poiId);
+          if (!poi) return t;
+          const newDaysList: DayScheduleSimple[] = (t.daysList || []).map((d) => ({
+            day: d.day,
+            morning: (d.morning || []).filter((p) => p.id !== poiId),
+            afternoon: (d.afternoon || []).filter((p) => p.id !== poiId),
+            evening: (d.evening || []).filter((p) => p.id !== poiId),
+          }));
+          const targetIdx = newDaysList.findIndex((d) => d.day === targetDay);
+          if (targetIdx >= 0) {
+            newDaysList[targetIdx] = {
+              ...newDaysList[targetIdx],
+              afternoon: [...(newDaysList[targetIdx].afternoon || []), poi],
             };
-          }),
-        })),
-        removeDayFromTrip: (tripId, day) => set((state) => {
-          const trip = state.trips.find((t) => t.id === tripId);
-          if (!trip) return state;
-          const deletedDay = (trip.daysList || []).find((d) => d.day === day);
-          if (!deletedDay) return state;
+          } else {
+            newDaysList.push({ day: targetDay, afternoon: [poi] });
+            newDaysList.sort((a, b) => a.day - b.day);
+          }
           return {
-            trips: state.trips.map((t) => {
-              if (t.id !== tripId) return t;
-              const filteredList = (t.daysList || []).filter((d) => d.day !== day);
-              const newDaysList = filteredList
-                .sort((a, b) => a.day - b.day)
-                .map((d, idx) => ({ ...d, day: idx + 1 }));
-              return {
-                ...t,
-                days: newDaysList.length,
-                daysList: newDaysList.length > 0 ? newDaysList : undefined,
-              };
-            }),
-            undoStack: [...state.undoStack, { type: 'removeDay', payload: { tripId, day: deletedDay } }],
+            ...t,
+            daysList: newDaysList,
+            days: computeDays(newDaysList, t.days),
           };
         }),
+      })),
+      addDayToTrip: (tripId) => set((state) => ({
+        trips: state.trips.map((t) => {
+          if (t.id !== tripId) return t;
+          const currentDays = computeDays(t.daysList, t.days);
+          const nextDay = currentDays + 1;
+          const newDaysList = t.daysList ? [...t.daysList] : [];
+          if (!newDaysList.find((d) => d.day === nextDay)) {
+            newDaysList.push({ day: nextDay });
+            newDaysList.sort((a, b) => a.day - b.day);
+          }
+          return {
+            ...t,
+            days: nextDay,
+            daysList: newDaysList,
+          };
+        }),
+      })),
+      removeDayFromTrip: (tripId, day) => set((state) => {
+        const trip = state.trips.find((t) => t.id === tripId);
+        if (!trip) return state;
+        const deletedDay = (trip.daysList || []).find((d) => d.day === day);
+        if (!deletedDay) return state;
+        return {
+          trips: state.trips.map((t) => {
+            if (t.id !== tripId) return t;
+            const filteredList = (t.daysList || []).filter((d) => d.day !== day);
+            const newDaysList = filteredList
+              .sort((a, b) => a.day - b.day)
+              .map((d, idx) => ({ ...d, day: idx + 1 }));
+            return {
+              ...t,
+              days: newDaysList.length,
+              daysList: newDaysList.length > 0 ? newDaysList : undefined,
+            };
+          }),
+          undoStack: [...state.undoStack, { type: 'removeDay', payload: { tripId, day: deletedDay } }],
+        };
+      }),
       completeTrip: (tripId) => set((state) => ({
         trips: state.trips.map((t) =>
           t.id === tripId ? { ...t, status: 'completed' as const } : t
@@ -332,28 +331,28 @@ export const useTripStore = create<TripState>()(
         if (state.undoStack.length === 0) return state;
         const lastAction = state.undoStack[state.undoStack.length - 1];
         const newStack = state.undoStack.slice(0, -1);
-        let result = state;
-        
         if (lastAction.type === 'removeTrip') {
           const trip = lastAction.payload as Trip;
-          result = {
-            trips: [...state.trips, trip].sort((a, b) => 
+          return {
+            trips: [...state.trips, trip].sort((a, b) =>
               new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
             ),
             undoStack: newStack,
           };
-        } else if (lastAction.type === 'removePOI') {
+        }
+        if (lastAction.type === 'removePOI') {
           const { tripId, poi } = lastAction.payload as { tripId: string; poi: TripPOI };
-          result = {
+          return {
             trips: state.trips.map((t) => {
               if (t.id !== tripId) return t;
               return { ...t, pois: [...t.pois, poi] };
             }),
             undoStack: newStack,
           };
-        } else if (lastAction.type === 'removeDay') {
+        }
+        if (lastAction.type === 'removeDay') {
           const { tripId, day } = lastAction.payload as { tripId: string; day: DayScheduleSimple };
-          result = {
+          return {
             trips: state.trips.map((t) => {
               if (t.id !== tripId) return t;
               const newDaysList = [...(t.daysList || []), day].sort((a, b) => a.day - b.day);
@@ -361,20 +360,20 @@ export const useTripStore = create<TripState>()(
             }),
             undoStack: newStack,
           };
-        } else if (lastAction.type === 'removeExpense') {
+        }
+        if (lastAction.type === 'removeExpense') {
           const expense = lastAction.payload as Expense;
           const trip = state.trips.find((t) => t.id === expense.tripId);
           const newSpent = (trip?.spent || 0) + expense.amount;
-          result = {
+          return {
             expenses: [expense, ...state.expenses],
             trips: state.trips.map((t) => t.id === expense.tripId ? { ...t, spent: newSpent } : t),
             undoStack: newStack,
           };
         }
-        
-        return result;
-      });
-    });
+        return state;
+      }),
+    }),
     {
       name: 'tuji-trip-storage',
     }
