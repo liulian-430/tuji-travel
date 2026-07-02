@@ -166,6 +166,7 @@ export default function Map() {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedTransportIndex, setSelectedTransportIndex] = useState<number | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dragOverIndexRef = useRef<number | null>(null);
   const dragStartYRef = useRef<number>(0);
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -782,47 +783,71 @@ export default function Map() {
               const handleDragStart = (e: React.MouseEvent | React.TouchEvent, idx: number) => {
                 if (viewMode === 'all') return;
                 e.preventDefault();
+                e.stopPropagation();
                 const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
                 dragStartYRef.current = clientY;
                 setDraggingIndex(idx);
+                setDragOverIndex(idx);
+                dragOverIndexRef.current = idx;
                 setIsDragging(true);
-              };
 
-              const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
-                if (draggingIndex === null || !isDragging) return;
-                const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-                const cardHeight = 100;
-                const deltaY = clientY - dragStartYRef.current;
-                const moveSteps = Math.round(deltaY / cardHeight);
-                const newIndex = Math.max(0, Math.min(displayedPois.length - 1, draggingIndex + moveSteps));
-                if (newIndex !== dragOverIndex) {
-                  setDragOverIndex(newIndex);
-                }
-              };
+                const onMove = (ev: MouseEvent | TouchEvent) => {
+                  ev.preventDefault();
+                  const y = 'touches' in ev ? ev.touches[0].clientY : ev.clientY;
+                  const deltaY = y - dragStartYRef.current;
+                  const cardHeight = 120;
+                  const moveSteps = Math.round(deltaY / cardHeight);
+                  const newIndex = Math.max(0, Math.min(displayedPois.length - 1, idx + moveSteps));
+                  if (newIndex !== dragOverIndexRef.current) {
+                    dragOverIndexRef.current = newIndex;
+                    setDragOverIndex(newIndex);
+                  }
+                };
 
-              const handleDragEnd = () => {
-                if (draggingIndex !== null && dragOverIndex !== null && draggingIndex !== dragOverIndex && typeof viewMode === 'number') {
-                  reorderPoisInDay(selectedTrip?.id || '', viewMode, draggingIndex, dragOverIndex);
-                  showToast('行程顺序已更新', 'success');
-                }
-                setDraggingIndex(null);
-                setDragOverIndex(null);
-                setIsDragging(false);
+                const onEnd = () => {
+                  document.removeEventListener('mousemove', onMove);
+                  document.removeEventListener('touchmove', onMove);
+                  document.removeEventListener('mouseup', onEnd);
+                  document.removeEventListener('touchend', onEnd);
+
+                  const fromIdx = idx;
+                  const toIdx = dragOverIndexRef.current;
+                  if (toIdx !== null && toIdx !== fromIdx && typeof viewMode === 'number') {
+                    reorderPoisInDay(selectedTrip?.id || '', viewMode, fromIdx, toIdx);
+                    showToast('行程顺序已更新', 'success');
+                  }
+                  setDraggingIndex(null);
+                  setDragOverIndex(null);
+                  dragOverIndexRef.current = null;
+                  setIsDragging(false);
+                };
+
+                // 延迟200ms才真正开始拖拽，避免误触
+                const timer = setTimeout(() => {
+                  document.addEventListener('mousemove', onMove);
+                  document.addEventListener('touchmove', onMove, { passive: false });
+                  document.addEventListener('mouseup', onEnd);
+                  document.addEventListener('touchend', onEnd);
+                }, 200);
+
+                // 如果提前松手，取消延迟
+                const cancelTimer = () => {
+                  clearTimeout(timer);
+                  document.removeEventListener('mouseup', cancelTimer);
+                  document.removeEventListener('touchend', cancelTimer);
+                };
+                document.addEventListener('mouseup', cancelTimer);
+                document.addEventListener('touchend', cancelTimer);
               };
 
               return (
                 <div key={poi.id} className="relative">
                   <div
                     className={`transition-all duration-300 ease-out ${
-                      isDragging ? 'opacity-50 scale-105 z-20 rotate-1 shadow-xl' : ''
-                    } ${isDragOver && draggingIndex && draggingIndex < index ? 'mt-16' : ''}`}
+                      isDragging ? 'opacity-60 scale-105 z-20 rotate-1 shadow-xl' : ''
+                    } ${isDragOver && draggingIndex !== null && draggingIndex !== index ? 'ring-2 ring-primary-mid/50' : ''}`}
                     onMouseDown={(e) => handleDragStart(e, index)}
-                    onMouseMove={handleDragMove}
-                    onMouseUp={handleDragEnd}
-                    onMouseLeave={handleDragEnd}
                     onTouchStart={(e) => handleDragStart(e, index)}
-                    onTouchMove={handleDragMove}
-                    onTouchEnd={handleDragEnd}
                     style={{ touchAction: 'none' }}
                   >
                     <SwipeableCard key={poi.id} onDelete={() => handleDeletePoi(poi.id)}>
