@@ -631,17 +631,22 @@ export default function Map() {
 
         {/* 地图右上角工具按钮 */}
         <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
-          <button
-            onClick={toggleFullscreen}
-            className="glass-card p-3 hover:bg-white/40 transition-colors"
-            title={isFullscreen ? '退出全屏' : '全屏显示'}
-          >
-            {isFullscreen ? (
-              <Minimize2 size={20} className="text-gray-700" />
-            ) : (
-              <Maximize2 size={20} className="text-gray-700" />
-            )}
-          </button>
+          <div className="glass-card flex flex-col overflow-hidden">
+            <button
+              onClick={() => mapRef.current?.zoomIn()}
+              className="p-3 hover:bg-white/40 transition-colors border-b border-white/20"
+              title="放大"
+            >
+              <Plus size={20} className="text-gray-700" />
+            </button>
+            <button
+              onClick={() => mapRef.current?.zoomOut()}
+              className="p-3 hover:bg-white/40 transition-colors"
+              title="缩小"
+            >
+              <Minus size={20} className="text-gray-700" />
+            </button>
+          </div>
           <div className="relative">
             <button
               onClick={() => setShowLayerPanel(!showLayerPanel)}
