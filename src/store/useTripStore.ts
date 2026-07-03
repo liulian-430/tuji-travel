@@ -229,17 +229,21 @@ export const useTripStore = create<TripState>()(
       loading: false,
 
       loadTrips: async () => {
+        if (!isLoggedIn()) return;
         set({ loading: true });
         try {
           const trips = await tripApi.list();
           const converted = trips.map(backendTripToFrontend);
           set({ trips: converted });
+        } catch (e) {
+          console.error('加载行程失败:', e);
         } finally {
           set({ loading: false });
         }
       },
 
       loadTripDetail: async (tripId: string) => {
+        if (!isLoggedIn()) return null;
         try {
           const trip = await tripApi.detail(tripId);
           const converted = backendTripToFrontend(trip as any);
@@ -247,7 +251,8 @@ export const useTripStore = create<TripState>()(
             trips: state.trips.map((t) => (t.id === tripId ? converted : t)),
           }));
           return converted;
-        } catch {
+        } catch (e) {
+          console.error('加载行程详情失败:', e);
           return null;
         }
       },
@@ -255,23 +260,25 @@ export const useTripStore = create<TripState>()(
       createTrip: async (tripData) => {
         const { pois, schedules, ...baseData } = tripData as any;
         
+        const createLocalTrip = (): Trip => ({
+          id: `trip-${Date.now()}`,
+          name: baseData.name,
+          destination: baseData.destination,
+          days: baseData.days,
+          nights: baseData.nights,
+          people: baseData.people,
+          startDate: baseData.startDate,
+          status: baseData.status || 'planning',
+          budget: baseData.budget,
+          spent: baseData.spent || 0,
+          coverImage: baseData.coverImage,
+          pois: pois || [],
+          daysList: schedules,
+          createdAt: new Date().toISOString(),
+        });
+
         if (!isLoggedIn()) {
-          const localTrip: Trip = {
-            id: `trip-${Date.now()}`,
-            name: baseData.name,
-            destination: baseData.destination,
-            days: baseData.days,
-            nights: baseData.nights,
-            people: baseData.people,
-            startDate: baseData.startDate,
-            status: baseData.status || 'planning',
-            budget: baseData.budget,
-            spent: baseData.spent || 0,
-            coverImage: baseData.coverImage,
-            pois: pois || [],
-            daysList: schedules,
-            createdAt: new Date().toISOString(),
-          };
+          const localTrip = createLocalTrip();
           set((state) => ({
             trips: [localTrip, ...state.trips],
             currentTripId: state.currentTripId || localTrip.id,
@@ -279,31 +286,41 @@ export const useTripStore = create<TripState>()(
           return localTrip;
         }
 
-        const created = await tripApi.create(baseData);
-        
-        if (schedules && schedules.length > 0) {
-          for (const daySchedule of schedules) {
-            const allPois = [...(daySchedule.morning || []), ...(daySchedule.afternoon || []), ...(daySchedule.evening || [])];
-            for (const poi of allPois) {
-              await tripApi.addPOI(created.id, { ...poi, day: daySchedule.day } as any);
+        try {
+          const created = await tripApi.create(baseData);
+          
+          if (schedules && schedules.length > 0) {
+            for (const daySchedule of schedules) {
+              const allPois = [...(daySchedule.morning || []), ...(daySchedule.afternoon || []), ...(daySchedule.evening || [])];
+              for (const poi of allPois) {
+                await tripApi.addPOI(created.id, { ...poi, day: daySchedule.day } as any);
+              }
+            }
+          } else if (pois && pois.length > 0) {
+            for (let i = 0; i < pois.length; i++) {
+              const poi = pois[i];
+              const day = poi.day || Math.floor(i / 3) + 1;
+              await tripApi.addPOI(created.id, { ...poi, day } as any);
             }
           }
-        } else if (pois && pois.length > 0) {
-          for (let i = 0; i < pois.length; i++) {
-            const poi = pois[i];
-            const day = poi.day || Math.floor(i / 3) + 1;
-            await tripApi.addPOI(created.id, { ...poi, day } as any);
-          }
-        }
 
-        const tripWithPois = await tripApi.detail(created.id);
-        const finalConverted = backendTripToFrontend(tripWithPois as any);
-        
-        set((state) => ({
-          trips: [finalConverted, ...state.trips],
-          currentTripId: state.currentTripId || finalConverted.id,
-        }));
-        return finalConverted;
+          const tripWithPois = await tripApi.detail(created.id);
+          const finalConverted = backendTripToFrontend(tripWithPois as any);
+          
+          set((state) => ({
+            trips: [finalConverted, ...state.trips],
+            currentTripId: state.currentTripId || finalConverted.id,
+          }));
+          return finalConverted;
+        } catch (e) {
+          console.error('创建行程失败，使用本地模式:', e);
+          const localTrip = createLocalTrip();
+          set((state) => ({
+            trips: [localTrip, ...state.trips],
+            currentTripId: state.currentTripId || localTrip.id,
+          }));
+          return localTrip;
+        }
       },
 
       setPendingTrip: (trip) => set({ pendingTrip: trip }),

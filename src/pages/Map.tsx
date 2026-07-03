@@ -508,9 +508,8 @@ export default function Map() {
           maxZoom={18}
           scrollWheelZoom
           zoomControl={false}
-          className="w-full h-full custom-map"
+          className="w-full h-full"
         >
-          <ZoomControl position="bottomright" />
           <TileLayer
             attribution={layerOptions.find((l) => l.id === activeLayer)?.attribution}
             url={layerOptions.find((l) => l.id === activeLayer)?.url || layerOptions[0].url}
@@ -629,6 +628,22 @@ export default function Map() {
 
         {/* 地图右上角工具按钮 */}
         <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
+          <div className="glass-card flex flex-col overflow-hidden">
+            <button
+              onClick={() => mapRef.current?.zoomIn()}
+              className="p-3 hover:bg-white/40 transition-colors border-b border-white/20"
+              title="放大"
+            >
+              <Plus size={20} className="text-gray-700" />
+            </button>
+            <button
+              onClick={() => mapRef.current?.zoomOut()}
+              className="p-3 hover:bg-white/40 transition-colors"
+              title="缩小"
+            >
+              <Minus size={20} className="text-gray-700" />
+            </button>
+          </div>
           <button
             onClick={toggleFullscreen}
             className="glass-card p-3 hover:bg-white/40 transition-colors"

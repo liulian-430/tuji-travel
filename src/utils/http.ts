@@ -30,21 +30,28 @@ api.interceptors.response.use(
       if (data.code === 200) {
         return data.data;
       }
-      showToast(data.message || '请求失败', 'error');
+      if (!(response.config as any).silentError) {
+        showToast(data.message || '请求失败', 'error');
+      }
       return Promise.reject(new Error(data.message || '请求失败'));
     }
     return data;
   },
   (error: AxiosError) => {
+    const config = error.config as any;
+    const silentError = config?.silentError;
+    
     if (error.response?.status === 401) {
       useAuthStore.getState().logout();
-    } else if (error.response?.status === 403) {
-      showToast('没有权限', 'error');
-    } else if (error.response?.status === 500) {
-      showToast('服务器错误', 'error');
-    } else {
-      const message = (error.response?.data as any)?.message || error.message || '请求失败';
-      showToast(message, 'error');
+    } else if (!silentError) {
+      if (error.response?.status === 403) {
+        showToast('没有权限', 'error');
+      } else if (error.response?.status === 500) {
+        showToast('服务器错误', 'error');
+      } else {
+        const message = (error.response?.data as any)?.message || error.message || '请求失败';
+        showToast(message, 'error');
+      }
     }
     return Promise.reject(error);
   }
