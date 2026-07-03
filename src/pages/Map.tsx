@@ -142,65 +142,6 @@ function MapController({
   return null;
 }
 
-// 使用 useMap 获取地图实例的缩放控件（放在 MapContainer 内部，避免 ref 跨层失效）
-function ZoomControls() {
-  const map = useMap();
-  const [canZoomIn, setCanZoomIn] = useState(true);
-  const [canZoomOut, setCanZoomOut] = useState(true);
-
-  useEffect(() => {
-    const updateZoomState = () => {
-      const current = map.getZoom();
-      const max = map.getMaxZoom() ?? 18;
-      const min = map.getMinZoom() ?? 3;
-      setCanZoomIn(current < max);
-      setCanZoomOut(current > min);
-    };
-    updateZoomState();
-    map.on('zoomend', updateZoomState);
-    return () => {
-      map.off('zoomend', updateZoomState);
-    };
-  }, [map]);
-
-  const handleZoomIn = useCallback(() => {
-    const current = map.getZoom();
-    const max = map.getMaxZoom() ?? 18;
-    if (current < max) {
-      map.setZoom(current + 1);
-    }
-  }, [map]);
-
-  const handleZoomOut = useCallback(() => {
-    const current = map.getZoom();
-    const min = map.getMinZoom() ?? 3;
-    if (current > min) {
-      map.setZoom(current - 1);
-    }
-  }, [map]);
-
-  return (
-    <div className="absolute bottom-4 right-3 z-[1000] flex flex-col gap-1 pointer-events-auto">
-      <button
-        onClick={(e) => { e.stopPropagation(); handleZoomIn(); }}
-        className={`glass-card w-10 h-10 flex items-center justify-center transition-all ${canZoomIn ? 'hover:bg-white/50 active:scale-95' : 'opacity-50 cursor-not-allowed'}`}
-        type="button"
-        disabled={!canZoomIn}
-      >
-        <PlusCircle size={20} className="text-gray-700" />
-      </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); handleZoomOut(); }}
-        className={`glass-card w-10 h-10 flex items-center justify-center transition-all ${canZoomOut ? 'hover:bg-white/50 active:scale-95' : 'opacity-50 cursor-not-allowed'}`}
-        type="button"
-        disabled={!canZoomOut}
-      >
-        <Minus size={20} className="text-gray-700" />
-      </button>
-    </div>
-  );
-}
-
 export default function Map() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -567,7 +508,7 @@ export default function Map() {
           maxZoom={18}
           scrollWheelZoom
           zoomControl={false}
-          className="w-full h-full"
+          className="w-full h-full custom-map"
         >
           <TileLayer
             attribution={layerOptions.find((l) => l.id === activeLayer)?.attribution}
@@ -633,8 +574,35 @@ export default function Map() {
             </Marker>
           ))}
           <MapController positions={fitPositions} mapRef={mapRef} />
-          <ZoomControls />
         </MapContainer>
+
+        {/* 缩放按钮（放在MapContainer外部，通过mapRef控制，避免Leaflet内部事件干扰） */}
+        <div className="absolute bottom-4 right-3 z-[1000] flex flex-col gap-1">
+          <button
+            onClick={() => {
+              if (!mapRef.current) return;
+              const current = mapRef.current.getZoom();
+              const max = mapRef.current.getMaxZoom() ?? 18;
+              if (current < max) mapRef.current.setZoom(current + 1);
+            }}
+            className="glass-card w-10 h-10 flex items-center justify-center hover:bg-white/50 active:scale-95 transition-all"
+            type="button"
+          >
+            <PlusCircle size={20} className="text-gray-700" />
+          </button>
+          <button
+            onClick={() => {
+              if (!mapRef.current) return;
+              const current = mapRef.current.getZoom();
+              const min = mapRef.current.getMinZoom() ?? 3;
+              if (current > min) mapRef.current.setZoom(current - 1);
+            }}
+            className="glass-card w-10 h-10 flex items-center justify-center hover:bg-white/50 active:scale-95 transition-all"
+            type="button"
+          >
+            <Minus size={20} className="text-gray-700" />
+          </button>
+        </div>
 
         {/* 左上角行程切换按钮 */}
         {planningTrips.length > 0 && (
