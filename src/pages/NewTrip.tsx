@@ -7,7 +7,7 @@ import { DEFAULT_BUDGET } from '@/config/constants';
 
 export default function NewTrip() {
   const navigate = useNavigate();
-  const { pendingTrip, clearPendingTrip, addTrip, trips } = useTripStore();
+  const { pendingTrip, clearPendingTrip, createTrip, trips } = useTripStore();
   const { showToast } = useToastStore();
   const [tripName, setTripName] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -18,28 +18,30 @@ export default function NewTrip() {
     }
   }, [pendingTrip]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!pendingTrip) return;
-    const newTrip: Trip = {
-      id: `trip-${Date.now()}`,
-      name: tripName || pendingTrip.name,
-      destination: pendingTrip.destination,
-      days: pendingTrip.days,
-      nights: pendingTrip.nights ?? Math.max(0, pendingTrip.days - 1),
-      people: pendingTrip.people ?? 1,
-      startDate: new Date().toISOString().split('T')[0],
-      budget: pendingTrip.budget ?? DEFAULT_BUDGET,
-      spent: 0,
-      pois: pendingTrip.pois,
-      status: 'in_progress',
-      daysList: pendingTrip.schedules,
-      coverImage: pendingTrip.pois[0]?.image || 'https://picsum.photos/seed/trip-new/600/400',
-      createdAt: new Date().toISOString(),
-    };
-    addTrip(newTrip);
-    clearPendingTrip();
-    showToast('行程保存成功', 'success');
-    navigate(`/trip/${newTrip.id}`);
+    try {
+      const createdTrip = await createTrip({
+        name: tripName || pendingTrip.name,
+        destination: pendingTrip.destination,
+        days: pendingTrip.days,
+        nights: pendingTrip.nights ?? Math.max(0, pendingTrip.days - 1),
+        people: pendingTrip.people ?? 1,
+        startDate: new Date().toISOString().split('T')[0],
+        budget: pendingTrip.budget ?? DEFAULT_BUDGET,
+        spent: 0,
+        status: 'in_progress',
+        coverImage: pendingTrip.pois[0]?.image || 'https://picsum.photos/seed/trip-new/600/400',
+        pois: pendingTrip.pois,
+        schedules: pendingTrip.schedules,
+      });
+      clearPendingTrip();
+      showToast('行程保存成功', 'success');
+      navigate(`/trip/${createdTrip.id}`);
+    } catch (error) {
+      console.error('创建行程失败:', error);
+      showToast('创建行程失败，请重试', 'error');
+    }
   };
 
   if (pendingTrip) {

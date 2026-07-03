@@ -168,7 +168,7 @@ interface TripState {
   loading: boolean;
   loadTrips: () => Promise<void>;
   loadTripDetail: (tripId: string) => Promise<Trip | null>;
-  createTrip: (trip: Partial<Trip> & { name: string; destination: string; days: number; startDate: string }) => Promise<Trip>;
+  createTrip: (trip: Partial<Trip> & { name: string; destination: string; days: number; startDate: string; schedules?: DayScheduleSimple[]; pois?: TripPOI[] }) => Promise<Trip>;
   setPendingTrip: (trip: {
     name: string;
     destination: string;
@@ -248,13 +248,33 @@ export const useTripStore = create<TripState>()(
       },
 
       createTrip: async (tripData) => {
-        const created = await tripApi.create(tripData);
+        const { pois, schedules, ...baseData } = tripData as any;
+        const created = await tripApi.create(baseData);
         const converted = backendTripToFrontend(created as any);
+        
+        if (schedules && schedules.length > 0) {
+          for (const daySchedule of schedules) {
+            const allPois = [...(daySchedule.morning || []), ...(daySchedule.afternoon || []), ...(daySchedule.evening || [])];
+            for (const poi of allPois) {
+              await tripApi.addPOI(created.id, { ...poi, day: daySchedule.day } as any);
+            }
+          }
+        } else if (pois && pois.length > 0) {
+          for (let i = 0; i < pois.length; i++) {
+            const poi = pois[i];
+            const day = poi.day || Math.floor(i / 3) + 1;
+            await tripApi.addPOI(created.id, { ...poi, day } as any);
+          }
+        }
+
+        const tripWithPois = await tripApi.detail(created.id);
+        const finalConverted = backendTripToFrontend(tripWithPois as any);
+        
         set((state) => ({
-          trips: [converted, ...state.trips],
-          currentTripId: state.currentTripId || converted.id,
+          trips: [finalConverted, ...state.trips],
+          currentTripId: state.currentTripId || finalConverted.id,
         }));
-        return converted;
+        return finalConverted;
       },
 
       setPendingTrip: (trip) => set({ pendingTrip: trip }),
