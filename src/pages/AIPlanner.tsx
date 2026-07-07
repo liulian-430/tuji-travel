@@ -7,6 +7,7 @@ import { mockPOIs, DaySchedule, TripPOI } from '../data/mock';
 import { useTripStore } from '@/store/useTripStore';
 import { useToastStore } from '@/store/useToastStore';
 import { DEFAULT_BUDGET, MIN_BUDGET, MAX_BUDGET, MIN_DAYS, MAX_DAYS, MIN_PEOPLE, MAX_PEOPLE } from '@/config/constants';
+import { aiApi, AiTripDay } from '@/api/ai';
 
 export default function AIPlanner() {
   const navigate = useNavigate();
@@ -70,48 +71,86 @@ export default function AIPlanner() {
     }
   };
 
-  const handleAIGenerate = () => {
-    if (!aiInput.trim()) return;
-    setIsGenerating(true);
-    // 模拟 AI 生成耗时
-    setTimeout(() => {
-      const mockSchedule: DaySchedule[] = [
-        {
-          id: '1',
-          tripId: 'new',
-          dayIndex: 1,
-          date: startDate,
-          items: mockPOIs.slice(0, 2).map((poi, idx) => ({
-            id: `1-${idx}`,
-            poiId: poi.id,
-            poi,
-            startTime: `${9 + idx * 3}:00`,
-            endTime: `${11 + idx * 3}:00`,
-            type: poi.type as 'scenic' | 'food' | 'hotel' | 'transport',
-          })),
-        },
-        {
-          id: '2',
-          tripId: 'new',
-          dayIndex: 2,
-          date: new Date(new Date(startDate).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          items: mockPOIs.slice(2, 4).map((poi, idx) => ({
-            id: `2-${idx}`,
-            poiId: poi.id,
-            poi,
-            startTime: `${9 + idx * 3}:00`,
-            endTime: `${11 + idx * 3}:00`,
-            type: poi.type as 'scenic' | 'food' | 'hotel' | 'transport',
-          })),
-        },
-      ];
-      setSchedules(mockSchedule);
-      setIsGenerated(true);
-      setIsGenerating(false);
-    }, 1800);
+  /**
+   * 将 AI 返回的行程数据转换为本地 DaySchedule 格式
+   */
+  const convertAiToSchedules = (aiTrips: AiTripDay[]): DaySchedule[] => {
+    return aiTrips.map((day) => ({
+      id: `${day.day}`,
+      tripId: 'new',
+      dayIndex: day.day,
+      date: day.date,
+      items: day.items.map((item, idx) => {
+        // 尝试在 mockPOIs 中查找匹配的 POI（用于显示图片和经纬度）
+        const matchedPoi = mockPOIs.find(p => p.name === item.name);
+        return {
+          id: `${day.day}-${idx}`,
+          poiId: matchedPoi?.id || `ai-${day.day}-${idx}`,
+          poi: matchedPoi || {
+            id: `ai-${day.day}-${idx}`,
+            name: item.name,
+            type: item.type,
+            description: item.description || '',
+            latitude: 0,
+            longitude: 0,
+            address: item.description || '',
+            rating: 0,
+            duration: '2小时',
+            price: item.estimatedCost || 0,
+            images: ['https://images.unsplash.com/photo-1480796927426-f609979314bd?w=400'],
+            tags: '',
+            city: destination || '北京',
+          },
+          startTime: item.startTime,
+          endTime: item.endTime,
+          type: item.type,
+        };
+      }),
+    }));
   };
 
-  const handleCustomGenerate = () => {
+  const handleAIGenerate = async () => {
+    if (!aiInput.trim()) {
+      showToast('请描述你的旅行需求', 'error');
+      return;
+    }
+    setIsGenerating(true);
+    setIsGenerated(false);
+    try {
+      const result = await aiApi.generateTrip({
+        userInput: aiInput,
+        startDate,
+      });
+      const converted = convertAiToSchedules(result);
+      setSchedules(converted);
+      setIsGenerated(true);
+      showToast('AI 行程生成成功', 'success');
+    } catch (error: any) {
+      // 失败时使用模拟数据作为降级
+      const mockDays = Math.max(2, Math.min(7, parseInt(aiInput.match(/\d+天/)?.[0]) || 2));
+      const mockSchedule: DaySchedule[] = Array.from({ length: mockDays }, (_, dayIdx) => ({
+        id: `${dayIdx + 1}`,
+        tripId: 'new',
+        dayIndex: dayIdx + 1,
+        date: new Date(new Date(startDate).getTime() + dayIdx * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        items: mockPOIs.slice(dayIdx * 2, (dayIdx + 1) * 2).map((poi, idx) => ({
+          id: `${dayIdx + 1}-${idx}`,
+          poiId: poi.id,
+          poi,
+          startTime: `${9 + idx * 3}:00`,
+          endTime: `${11 + idx * 3}:00`,
+          type: poi.type as 'scenic' | 'food' | 'hotel' | 'transport',
+        })),
+      }));
+      setSchedules(mockSchedule);
+      setIsGenerated(true);
+      showToast(error.message || 'AI 调用失败，使用推荐行程', 'info');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCustomGenerate = async () => {
     if (!destination.trim()) {
       showToast('请输入目的地城市', 'error');
       return;
@@ -129,12 +168,31 @@ export default function AIPlanner() {
       return;
     }
     setIsGenerating(true);
-    setTimeout(() => {
+    setIsGenerated(false);
+    try {
+      const result = await aiApi.generateTrip({
+        destination,
+        days,
+        people,
+        budget,
+        startDate,
+        preferences: {
+          poisText,
+          foodsText,
+          hotelsText,
+        },
+      });
+      const converted = convertAiToSchedules(result);
+      setSchedules(converted);
+      setIsGenerated(true);
+      showToast('AI 行程生成成功', 'success');
+    } catch (error: any) {
+      // 失败时使用模拟数据作为降级
       const selectedItems = [
         ...mockPOIs.filter(p => p.type === 'scenic'),
         ...mockPOIs.filter(p => p.type === 'food'),
         ...mockPOIs.filter(p => p.type === 'hotel'),
-      ].slice(0, 6);
+      ].slice(0, days * 2);
 
       const mockSchedule: DaySchedule[] = Array.from({ length: days }, (_, dayIdx) => ({
         id: `${dayIdx + 1}`,
@@ -153,8 +211,10 @@ export default function AIPlanner() {
 
       setSchedules(mockSchedule);
       setIsGenerated(true);
+      showToast(error.message || 'AI 调用失败，使用推荐行程', 'info');
+    } finally {
       setIsGenerating(false);
-    }, 1800);
+    }
   };
 
   const moveItem = (dayIndex: number, itemIndex: number, direction: 'up' | 'down') => {
@@ -244,11 +304,11 @@ export default function AIPlanner() {
               </div>
               <button
                 onClick={handleAIGenerate}
-                disabled={!aiInput.trim()}
+                disabled={!aiInput.trim() || isGenerating}
                 className="gradient-button w-full mt-6 flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Sparkles size={20} />
-                <span>AI 生成行程</span>
+                <span>{isGenerating ? 'AI 正在规划...' : 'AI 生成行程'}</span>
               </button>
             </GlassCard>
           ) : (
@@ -403,10 +463,11 @@ export default function AIPlanner() {
 
               <button
                 onClick={handleCustomGenerate}
-                className="gradient-button w-full mt-6 flex items-center justify-center gap-2"
+                disabled={isGenerating}
+                className="gradient-button w-full mt-6 flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Sparkles size={20} />
-                <span>生成行程</span>
+                <span>{isGenerating ? 'AI 正在规划...' : '生成行程'}</span>
               </button>
             </GlassCard>
           )

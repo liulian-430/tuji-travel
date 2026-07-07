@@ -5,6 +5,7 @@ import { TripsModule } from './trips/trips.module';
 import { PoisModule } from './pois/pois.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { AuthModule } from './auth/auth.module';
     PoisModule,
     UsersModule,
     AuthModule,
+    AiModule,
   ],
 })
 export class AppModule {}
