@@ -53,7 +53,7 @@ export class AiService {
   }
 
   /**
-   * 调用豆包大模型生成行程
+   * 调用豆包大模型生成行程（使用 /responses 接口）
    */
   async generateTrip(params: AIGenerateParams): Promise<TripDay[]> {
     if (!this.isAvailable()) {
@@ -63,7 +63,8 @@ export class AiService {
 
     try {
       const prompt = this.buildPrompt(params);
-      const response = await fetch(`${this.apiBaseUrl}/chat/completions`, {
+      // 使用豆包 responses 接口
+      const response = await fetch(`${this.apiBaseUrl}/responses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,18 +72,17 @@ export class AiService {
         },
         body: JSON.stringify({
           model: this.model,
-          messages: [
-            {
-              role: 'system',
-              content: '你是一个专业的旅行规划助手，擅长根据用户需求生成详细的旅行行程安排。',
-            },
+          input: [
             {
               role: 'user',
-              content: prompt,
+              content: [
+                {
+                  type: 'input_text',
+                  text: prompt,
+                },
+              ],
             },
           ],
-          temperature: 0.7,
-          max_tokens: 3000,
         }),
       });
 
@@ -93,7 +93,10 @@ export class AiService {
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || '';
+      // 豆包 responses 接口返回格式：output 数组包含 reasoning 和 message
+      // message 类型的 output 包含实际文本：output.find(o => o.type === 'message').content[0].text
+      const messageOutput = data.output?.find?.((o: any) => o.type === 'message');
+      const content = messageOutput?.content?.[0]?.text || '';
       this.logger.log(`豆包 AI 返回内容长度: ${content.length}`);
 
       return this.parseTripResponse(content, params);
