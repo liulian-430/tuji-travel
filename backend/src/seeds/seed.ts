@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { User } from '../users/user.entity';
 import { Trip } from '../trips/trip.entity';
 import { TripPoi } from '../trips/trip-poi.entity';

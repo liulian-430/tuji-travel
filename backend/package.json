@@ -20,8 +20,7 @@
     "@nestjs/passport": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/typeorm": "^11.0.0",
-    "bcrypt": "^5.1.1",
-    "sqlite3": "^5.1.7",
+    "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "passport": "^0.7.0",
@@ -31,9 +30,10 @@
     "redis": "^4.6.0",
     "reflect-metadata": "^0.2.1",
     "rxjs": "^7.8.1",
+    "sqlite3": "^5.1.7",
+    "ts-node": "^10.9.2",
     "typeorm": "^0.3.20",
-    "typescript": "^5.4.0",
-    "ts-node": "^10.9.2"
+    "typescript": "^5.4.0"
   },
   "devDependencies": {
     "@nestjs/schematics": "^11.0.0",

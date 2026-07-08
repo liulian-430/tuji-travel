@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, LogLevel } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -8,9 +8,11 @@ async function bootstrap() {
   console.log('📦 NODE_ENV:', process.env.NODE_ENV);
   console.log('💾 DB_TYPE:', process.env.DB_TYPE || 'sqlite');
 
+  const logLevels: LogLevel[] = ['error', 'warn', 'log', 'debug', 'verbose'];
+
   try {
     console.log('🔧 创建 Nest 应用...');
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create(AppModule, { logger: logLevels });
     console.log('✅ Nest 应用创建成功');
 
     console.log('🔧 配置 CORS...');
@@ -33,15 +35,16 @@ async function bootstrap() {
     await app.listen(port, '0.0.0.0');
     console.log('✅ 后端服务已启动，监听端口:', port);
     console.log('🌐 服务地址:', `http://0.0.0.0:${port}`);
-  } catch (err) {
-    console.error('❌ 服务启动失败:', err);
-    console.error('📋 错误堆栈:', err.stack);
+  } catch (err: any) {
+    console.error('❌ 服务启动失败:', err?.message || err);
+    console.error('📋 错误详情:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+    console.error('📋 错误堆栈:', err?.stack);
     process.exit(1);
   }
 }
 
-bootstrap().catch((err) => {
-  console.error('💥 未捕获的启动错误:', err);
-  console.error('📋 错误堆栈:', err.stack);
+bootstrap().catch((err: any) => {
+  console.error('💥 未捕获的启动错误:', err?.message || err);
+  console.error('📋 错误堆栈:', err?.stack);
   process.exit(1);
 });
