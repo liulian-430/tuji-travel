@@ -1,44 +1,34 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, LogLevel } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 
-function log(msg: string) {
-  console.error(msg);
-}
-
 async function bootstrap() {
-  log('🚀 正在启动后端服务...');
-  log('📍 PORT: ' + (process.env.PORT || 3000));
-  log('📦 NODE_ENV: ' + process.env.NODE_ENV);
-
-  const logLevels: LogLevel[] = ['error', 'warn', 'log', 'debug', 'verbose'];
-
+  const logger = new Logger('Bootstrap');
   try {
-    log('🔧 创建 Nest 应用...');
-    const app = await NestFactory.create(AppModule, { logger: logLevels });
-    log('✅ Nest 应用创建成功');
+    logger.log('Starting application...');
+    logger.log('PORT: ' + (process.env.PORT || 3000));
 
-    log('🔧 配置 CORS...');
+    const app = await NestFactory.create(AppModule, { logger: ['error', 'warn', 'log', 'debug', 'verbose'] });
+
     app.enableCors({ origin: true, credentials: true });
 
-    log('🔧 配置全局管道...');
     app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
 
-    log('🔧 设置全局前缀...');
     app.setGlobalPrefix('api');
 
     const port = process.env.PORT || 3000;
-    log('🔧 启动监听端口: ' + port);
+    logger.log('Listening on port: ' + port);
     await app.listen(port, '0.0.0.0');
-    log('✅ 后端服务已启动，监听端口: ' + port);
+    logger.log('Application started successfully on port ' + port);
   } catch (err: any) {
-    log('❌ 服务启动失败: ' + (err?.message || err));
-    log('📋 错误堆栈: ' + err?.stack);
+    logger.error('Failed to start application: ' + (err?.message || err));
+    logger.error(err?.stack);
     process.exit(1);
   }
 }
 
 bootstrap().catch((err: any) => {
-  log('💥 未捕获的启动错误: ' + (err?.message || err));
+  const logger = new Logger('Bootstrap');
+  logger.error('Unhandled error: ' + (err?.message || err));
   process.exit(1);
 });
