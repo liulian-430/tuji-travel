@@ -1,3 +1,12 @@
+process.on('uncaughtException', (err) => {
+  console.error('💥 UNCAUGHT EXCEPTION:', err);
+  console.error('📋 Stack:', err.stack);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('💥 UNHANDLED REJECTION at:', promise, 'reason:', reason);
+});
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, LogLevel } from '@nestjs/common';
 import { AppModule } from './app.module';
@@ -7,6 +16,7 @@ async function bootstrap() {
   console.log('📍 PORT:', process.env.PORT || 3000);
   console.log('📦 NODE_ENV:', process.env.NODE_ENV);
   console.log('💾 DB_TYPE:', process.env.DB_TYPE || 'sqlite');
+  console.log('📁 __dirname:', __dirname);
 
   const logLevels: LogLevel[] = ['error', 'warn', 'log', 'debug', 'verbose'];
 
@@ -34,7 +44,6 @@ async function bootstrap() {
     console.log('🔧 启动监听端口:', port);
     await app.listen(port, '0.0.0.0');
     console.log('✅ 后端服务已启动，监听端口:', port);
-    console.log('🌐 服务地址:', `http://0.0.0.0:${port}`);
   } catch (err: any) {
     console.error('❌ 服务启动失败:', err?.message || err);
     console.error('📋 错误详情:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
