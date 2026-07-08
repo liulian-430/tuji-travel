@@ -13,28 +13,27 @@ import { AiModule } from './ai/ai.module';
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
         const dbType = configService.get('DB_TYPE') || 'sqlite';
-        const baseConfig = {
-          entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: configService.get('NODE_ENV') !== 'production',
-          logging: configService.get('NODE_ENV') !== 'production',
-        };
 
         if (dbType === 'postgres') {
           return {
-            ...baseConfig,
             type: 'postgres',
             host: configService.get('DB_HOST'),
             port: parseInt(configService.get('DB_PORT')),
             username: configService.get('DB_USERNAME'),
             password: configService.get('DB_PASSWORD'),
             database: configService.get('DB_DATABASE'),
+            entities: [__dirname + '/**/*.entity{.ts,.js}'],
+            synchronize: true,
+            logging: false,
           };
         }
 
         return {
-          ...baseConfig,
           type: 'better-sqlite3',
-          database: configService.get('DB_DATABASE') || 'tuji_dev.db',
+          database: configService.get('DB_DATABASE') || ':memory:',
+          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          synchronize: true,
+          logging: false,
         };
       },
       inject: [ConfigService],
